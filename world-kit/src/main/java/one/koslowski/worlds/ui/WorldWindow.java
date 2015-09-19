@@ -55,7 +55,6 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     // setShellStyle(SWT.SHELL_TRIM);
     
     addMenuBar();
-    // addStatusLine();
   }
   
   @Override
@@ -95,28 +94,9 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
   }
   
   @Override
-  protected Control createContents(Composite parent)
-  {
-    container = new Composite(parent, SWT.NONE);
-    container.setLayout(new FillLayout());
-    
-    if (controller != null)
-    {
-      control = createWorldContents();
-    }
-    
-    return container;
-  }
-  
-  protected Control createWorldContents()
-  {
-    return WorldManager.sync(controller.getWorld(), () -> controller.createContents(container, getMenuBarManager()));
-  }
-  
-  @Override
   protected MenuManager createMenuManager()
   {
-    MenuManager main = new MenuManager(null);
+    MenuManager main = super.createMenuManager();
     
     MenuManager worldMenu = new MenuManager("Welt");
     worldMenu.setRemoveAllWhenShown(true);
@@ -174,12 +154,31 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
   @Override
   protected ToolBarManager createToolBarManager(int style)
   {
-    ToolBarManager manager = new ToolBarManager(style);
+    ToolBarManager manager = super.createToolBarManager(style);
     
     manager.add(actionPlay = new PlayAction());
     manager.add(actionPause = new PauseAction());
     
     return manager;
+  }
+  
+  @Override
+  protected Control createContents(Composite parent)
+  {
+    container = new Composite(parent, SWT.NONE);
+    container.setLayout(new FillLayout());
+    
+    if (controller != null)
+    {
+      control = createWorldContents();
+    }
+    
+    return container;
+  }
+  
+  protected Control createWorldContents()
+  {
+    return WorldManager.sync(controller.getWorld(), () -> controller.createContents(container, getMenuBarManager()));
   }
   
   @Override
