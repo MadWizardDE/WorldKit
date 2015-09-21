@@ -58,8 +58,8 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     // setShellStyle(SWT.SHELL_TRIM);
     
     addMenuBar();
-    // addToolBar(SWT.BORDER);
-    addCoolBar(SWT.FLAT | SWT.BORDER);
+    addToolBar(SWT.BORDER);
+    // addCoolBar(SWT.FLAT | SWT.BORDER);
   }
   
   @Override
@@ -67,7 +67,8 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
   {
     super.create();
     
-    getCoolBarManager().setLockLayout(true);
+    if (getCoolBarManager() != null)
+      getCoolBarManager().setLockLayout(true);
   }
   
   @Override
