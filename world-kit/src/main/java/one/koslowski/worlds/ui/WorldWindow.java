@@ -3,6 +3,7 @@ package one.koslowski.worlds.ui;
 import java.util.EventObject;
 
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.CoolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.action.ToolBarManager;
@@ -10,6 +11,8 @@ import org.eclipse.jface.window.WindowManager;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
@@ -55,12 +58,16 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     // setShellStyle(SWT.SHELL_TRIM);
     
     addMenuBar();
+    // addToolBar(SWT.BORDER);
+    addCoolBar(SWT.FLAT | SWT.BORDER);
   }
   
   @Override
   public void create()
   {
     super.create();
+    
+    getCoolBarManager().setLockLayout(true);
   }
   
   @Override
@@ -77,8 +84,6 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     else
       shell = getShell();
       
-    // shell.setLayout(new FillLayout(SWT.VERTICAL));
-    
     if (controller != null)
     {
       shell.setImage(WorldKit.UI.getImage(controller.getClass()));
@@ -87,7 +92,7 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     }
     else
     {
-      shell.setImage(null);
+      shell.setImage(WorldKit.UI.getImage(WorldKit.SharedImages.IMG_WORLD));
       
       shell.setText("Keine Welt geladen");
     }
@@ -152,6 +157,16 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
   }
   
   @Override
+  protected CoolBarManager createCoolBarManager(int style)
+  {
+    CoolBarManager manager = super.createCoolBarManager(style);
+    
+    manager.add(createToolBarManager(SWT.NONE));
+    
+    return manager;
+  }
+  
+  @Override
   protected ToolBarManager createToolBarManager(int style)
   {
     ToolBarManager manager = super.createToolBarManager(style);
@@ -162,10 +177,27 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     return manager;
   }
   
+  private void updateToolBar()
+  {
+    actionPlay.update();
+    actionPause.update();
+  }
+  
   @Override
   protected Control createContents(Composite parent)
   {
-    container = new Composite(parent, SWT.NONE);
+    Composite box = new Composite(parent, SWT.NONE);
+    GridLayout l = new GridLayout(1, true);
+    {
+      l.marginWidth = l.marginHeight = l.horizontalSpacing = l.verticalSpacing = 0;
+    }
+    box.setLayout(l);
+    
+    // Label separator = new Label(box, SWT.SEPARATOR | SWT.HORIZONTAL);
+    // separator.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+    
+    container = new Composite(box, SWT.NONE);
+    container.setLayoutData(new GridData(GridData.FILL_BOTH));
     container.setLayout(new FillLayout());
     
     if (controller != null)
@@ -227,6 +259,7 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
       }
       
       configureShell(null);
+      updateToolBar();
       
       container.layout();
       container.redraw();
@@ -264,8 +297,9 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     @Subscribe
     public void onWorldStateChange(WorldStateEvent event)
     {
-      actionPlay.setEnabled(actionPlay.enabled());
-      actionPause.setEnabled(actionPause.enabled());
+      updateToolBar();
+      
+      container.setEnabled(!event.getState().isSuspended());
     }
   }
   
@@ -396,7 +430,15 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     {
       super("Starten", SWT.PUSH);
       
+      setImageDescriptor(WorldKit.UI.getImageDescriptor(WorldKit.SharedImages.IMG_RESUME));
+      
+      update();
+    }
+    
+    private void update()
+    {
       setEnabled(enabled());
+      setChecked(false);
     }
     
     private boolean enabled()
@@ -435,7 +477,15 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     {
       super("Anhalten", SWT.PUSH);
       
+      setImageDescriptor(WorldKit.UI.getImageDescriptor(WorldKit.SharedImages.IMG_SUSPEND));
+      
+      update();
+    }
+    
+    private void update()
+    {
       setEnabled(enabled());
+      setChecked(false);
     }
     
     private boolean enabled()
@@ -545,5 +595,10 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     {
       getWindowManager().close();
     }
+  }
+  
+  public class WorldWindowContext
+  {
+  
   }
 }

@@ -2,6 +2,8 @@ package one.koslowski.worlds.ui;
 
 import java.util.EventObject;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jface.window.Window;
@@ -12,8 +14,8 @@ import one.koslowski.world.api.EventListener;
 import one.koslowski.world.api.World;
 import one.koslowski.world.api.World.WorldState;
 import one.koslowski.world.api.WorldManager;
+import one.koslowski.world.api.event.WorldAddedEvent;
 import one.koslowski.world.api.event.WorldRemovedEvent;
-import one.koslowski.world.api.event.WorldStartEvent;
 import one.koslowski.world.api.event.WorldSuspendedEvent;
 
 public class WorldWindowManager extends WindowManager implements EventListener
@@ -22,8 +24,11 @@ public class WorldWindowManager extends WindowManager implements EventListener
   
   private Map<World, WorldController> controllers;
   
+  private List<WorldController> pendingClose;
+  
   {
     controllers = new LinkedHashMap<>();
+    pendingClose = new LinkedList<>();
   }
   
   public WorldWindowManager(WorldManager manager)
@@ -35,11 +40,11 @@ public class WorldWindowManager extends WindowManager implements EventListener
   @Override
   public void processEvent(EventObject event)
   {
-    if (event instanceof WorldStartEvent)
+    if (event instanceof WorldAddedEvent)
     {
       Display.getDefault().asyncExec(() ->
       {
-        WorldController controller = controllers.get(((WorldStartEvent) event).getSource());
+        WorldController controller = controllers.get(event.getSource());
         
         WorldWindow window = getWindow(controller);
         
@@ -58,7 +63,13 @@ public class WorldWindowManager extends WindowManager implements EventListener
     }
     else if (event instanceof WorldSuspendedEvent)
     {
-      removeController(controllers.get(event.getSource()));
+      Display.getDefault().asyncExec(() ->
+      {
+        WorldController controller = controllers.get(event.getSource());
+        
+        if (pendingClose.remove(controller))
+          removeController(controllers.get(event.getSource()));
+      });
     }
     else if (event instanceof WorldRemovedEvent)
     {
@@ -111,7 +122,11 @@ public class WorldWindowManager extends WindowManager implements EventListener
     World world = controller.getWorld();
     
     if (world.getState() == WorldState.EXECUTING || world.getState().isWaiting())
+    {
+      pendingClose.add(controller);
+      
       controller.getWorld().interrupt();
+    }
     else
       manager.removeWorld(world);
   }
