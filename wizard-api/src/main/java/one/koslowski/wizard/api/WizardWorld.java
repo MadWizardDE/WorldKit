@@ -303,6 +303,8 @@ public class WizardWorld extends World
   
   public class WizardContext extends WorldContext<WizardWorld>
   {
+    private static final long serialVersionUID = 1L;
+    
     public ScoreTable getScoreTable()
     {
       return scoreTable;

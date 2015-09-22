@@ -52,6 +52,11 @@ public class WizardController implements WorldController
     world.setFrameDelimiter(new FrameDelimiter(1));
   }
   
+  public WizardController(WizardWorld world)
+  {
+    this.world = world;
+  }
+  
   @Override
   public WizardWorld getWorld()
   {

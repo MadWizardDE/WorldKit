@@ -12,6 +12,7 @@ import org.eclipse.swt.widgets.Display;
 
 import one.koslowski.world.api.EventListener;
 import one.koslowski.world.api.World;
+import one.koslowski.world.api.World.WorldState;
 import one.koslowski.world.api.WorldManager;
 import one.koslowski.world.api.event.WorldAddedEvent;
 import one.koslowski.world.api.event.WorldRemovedEvent;
@@ -113,7 +114,8 @@ public class WorldWindowManager extends WindowManager implements EventListener
     
     // hinzufügen & starten
     manager.addWorld(world);
-    manager.execute(world);
+    if (world.getState() == WorldState.FRESH)
+      manager.execute(world);
   }
   
   public void removeController(WorldController controller)

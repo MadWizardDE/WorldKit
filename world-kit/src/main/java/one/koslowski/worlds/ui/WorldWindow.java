@@ -1,6 +1,7 @@
 package one.koslowski.worlds.ui;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.EventObject;
@@ -25,8 +26,11 @@ import org.eclipse.swt.widgets.Shell;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
+import one.koslowski.connect4.api.Connect4World;
+import one.koslowski.wizard.api.WizardWorld;
 import one.koslowski.world.api.EventListener;
 import one.koslowski.world.api.FrameDelimiter;
+import one.koslowski.world.api.World;
 import one.koslowski.world.api.World.WorldState;
 import one.koslowski.world.api.WorldManager;
 import one.koslowski.world.api.event.WorldStateEvent;
@@ -375,7 +379,45 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     @Override
     public void run()
     {
-    
+      FileDialog fileDialog = new FileDialog(getShell(), SWT.OPEN);
+      fileDialog.setFilterExtensions(new String[] { "*.world" });
+      fileDialog.setText("Laden...");
+      fileDialog.open();
+      
+      if (!fileDialog.getFileName().isEmpty())
+      {
+        File file = new File(fileDialog.getFilterPath() + "/"
+            + fileDialog.getFileName());
+            
+        try (FileInputStream input = new FileInputStream(file))
+        {
+          World world = WorldManager.read(input);
+          
+          WorldController controller;
+          
+          switch (WorldType.of(world))
+          {
+            case CONNECT4:
+              controller = new Connect4Controller((Connect4World) world);
+              break;
+              
+            case WIZARD:
+              controller = new WizardController((WizardWorld) world);
+              break;
+              
+            default:
+              throw new ClassNotFoundException();
+          }
+          
+          getWindowManager().addController(controller);
+        }
+        catch (ClassNotFoundException | IOException e)
+        {
+          MessageDialog.openError(getShell(), "Fehler", "Laden fehlgeschlagen");
+          
+          e.printStackTrace();
+        }
+      }
     }
   }
   

@@ -1,8 +1,11 @@
 package one.koslowski.world.api;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -32,7 +35,7 @@ public class Entity implements Serializable
   transient EventBus      bus;
   
   /** Dynamisches Verhalten (u.a. für Strategie-Implementierung) */
-  public transient final Object x;
+  public final Object x;
   
   long id;
   
@@ -44,8 +47,6 @@ public class Entity implements Serializable
   
   protected Entity()
   {
-    bus = new EventBus(this::handleEventException);
-    
     x = createProxy();
     
     World.getWorld().addEntity(this);
@@ -63,7 +64,8 @@ public class Entity implements Serializable
           
     ClassLoader cl = Thread.currentThread().getContextClassLoader();
     
-    return Proxy.newProxyInstance(cl, list.toArray(new Class[list.size()]), this::handleInvocation);
+    return Proxy.newProxyInstance(cl, list.toArray(new Class[list.size()]),
+        (InvocationHandler & Serializable) this::handleInvocation);
   }
   
   static Entity getEntity()
@@ -115,7 +117,7 @@ public class Entity implements Serializable
     }
   }
   
-  private void handleEventException(Throwable t, SubscriberExceptionContext ctx)
+  void handleEventException(Throwable t, SubscriberExceptionContext ctx)
   {
     publishEvent(new EntityExceptionEvent(new EntityEventException(this, (WorldEvent) ctx.getEvent(), t)));
   }
@@ -145,6 +147,13 @@ public class Entity implements Serializable
     {
       ENTITY.remove();
     }
+  }
+  
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException
+  {
+    in.defaultReadObject();
+    
+    World.getEntityContext().getManager().register(this);
   }
   
   protected final EntityContext getContext()

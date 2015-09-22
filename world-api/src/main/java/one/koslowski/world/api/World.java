@@ -33,9 +33,11 @@ public abstract class World implements Serializable
   
   // +++ Steuerung +++ //
   
-  private transient Map<Class<?>, Context> contexts;
-  private transient List<EventListener>    listeners;
-  private transient ExceptionHandler       exceptionHandler;
+  private transient List<EventListener> listeners;
+  
+  private Map<Class<?>, WorldContext<?>> contexts;
+  
+  private transient ExceptionHandler exceptionHandler;
   
   // +++ Welt-Zustand +++ //
   
@@ -50,14 +52,29 @@ public abstract class World implements Serializable
   volatile Entity wait;
   
   {
-    listeners = new CopyOnWriteArrayList<>();
-    
     contexts = new ConcurrentHashMap<>();
   }
   
   protected World()
   {
     state = WorldState.FRESH;
+    
+    initTransient();
+  }
+  
+  static World getWorld()
+  {
+    WorldTask<?> task = WorldManager.getTask();
+    
+    if (task == null || task.getWorld() == null)
+      throw new IllegalStateException();
+      
+    return task.getWorld();
+  }
+  
+  protected void initTransient()
+  {
+    listeners = new CopyOnWriteArrayList<>();
     
     // Entity-Manager einrichten
     addListener(entityManager = new EntityManager(this));
@@ -66,26 +83,13 @@ public abstract class World implements Serializable
     exceptionHandler = new DefaultExceptionHandler();
   }
   
-  static World getWorld()
-  {
-    WorldTask<?> task = WorldManager.getTask();
-    
-    if (task == null)
-      throw new IllegalStateException();
-      
-    return task.getWorld();
-  }
-  
-  protected void addContext(Context ctx)
+  protected void addContext(WorldContext<?> ctx)
   {
     contexts.put(ctx.getClass(), ctx);
   }
   
-  protected void removeContext(Context ctx)
+  protected void removeContext(WorldContext<?> ctx)
   {
-    if (ctx instanceof EntityContext)
-      throw new IllegalArgumentException();
-      
     contexts.remove(ctx.getClass());
   }
   
@@ -97,7 +101,7 @@ public abstract class World implements Serializable
   
   public static EntityContext getEntityContext()
   {
-    return getContext(EntityContext.class);
+    return getWorld().entityManager.context;
   }
   
   public WorldState getState()
@@ -186,6 +190,8 @@ public abstract class World implements Serializable
   
   protected void addEntity(Entity entity)
   {
+    entity.id = ++entityManager.entityID;
+    
     entityManager.register(entity);
   }
   
@@ -269,6 +275,8 @@ public abstract class World implements Serializable
   
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException
   {
+    initTransient();
+    
     task = WorldManager.getTask();
     task.world = this;
     
@@ -397,8 +405,10 @@ public abstract class World implements Serializable
     }
   }
   
-  protected class WorldContext<T extends World> implements Context
+  protected class WorldContext<T extends World> implements Serializable
   {
+    private static final long serialVersionUID = 1L;
+    
     @SuppressWarnings("unchecked")
     public T getWorld()
     {

@@ -183,6 +183,8 @@ public class Connect4World extends World
   
   public class Connect4Context extends WorldContext<Connect4World>
   {
+    private static final long serialVersionUID = 1L;
+    
     public List<Connect4Player> getPlayers()
     {
       return players;

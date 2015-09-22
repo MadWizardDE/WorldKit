@@ -7,13 +7,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-import one.koslowski.world.api.World.WorldContext;
+import com.google.common.eventbus.EventBus;
+
 import one.koslowski.world.api.event.strategy.BroadcastStrategy;
 import one.koslowski.world.api.exception.EntityInvocationException;
 
 public class EntityManager implements EventListener
 {
   World world;
+  
+  EntityContext context;
   
   EntityEventStrategy strategy;
   
@@ -31,7 +34,9 @@ public class EntityManager implements EventListener
   
   EntityManager(World world)
   {
-    (this.world = world).addContext(new EntityContext());
+    this.world = world;
+    
+    context = new EntityContext();
     
     // Default Strategy
     strategy = new BroadcastStrategy();
@@ -73,8 +78,10 @@ public class EntityManager implements EventListener
   
   void register(Entity entity)
   {
-    entity.id = ++entityID;
     entity.ctx = entity.new EntityContext(this);
+    
+    entity.bus = new EventBus(entity::handleEventException);
+    entity.bus.register(entity);
     
     entities.put(entity.id, entity);
   }
@@ -93,9 +100,12 @@ public class EntityManager implements EventListener
   
   void unregister(Entity entity)
   {
-    entity.ctx = null;
-    
     entities.remove(entity);
+    
+    entity.bus.unregister(entity);
+    entity.bus = null;
+    
+    entity.ctx = null;
   }
   
   @Override
@@ -105,11 +115,16 @@ public class EntityManager implements EventListener
       strategy.processEvent((WorldEvent) event);
   }
   
-  public class EntityContext extends WorldContext<World>
+  public class EntityContext
   {
     EntityContext()
     {
-      world.super();
+    
+    }
+    
+    public World getWorld()
+    {
+      return world;
     }
     
     public EntityManager getManager()

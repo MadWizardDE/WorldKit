@@ -25,8 +25,8 @@ public class Connect4Controller implements WorldController
     {
       new Connect4Board(7, 6);
       
-      Connect4Player player1 = new Connect4Player("Rot", Color.RED);
-      Connect4Player player2 = new Connect4Player("Gelb", Color.YELLOW);
+      new Connect4Player("Rot", Color.RED);
+      new Connect4Player("Gelb", Color.YELLOW);
       
       // System.loadLibrary("Velena");
       // new VelenaPlayer("Rot", Color.RED, Difficulty.STRONG);
@@ -34,14 +34,26 @@ public class Connect4Controller implements WorldController
       
       // new HumanPlayer("Rot", Color.RED);
       // new HumanPlayer("Gelb", Color.YELLOW);
-      
-      StaticInvocationHandler handler = new StaticInvocationHandler();
-      handler.register(player1, new RandomStrategy());
-      handler.register(player2, new RandomStrategy());
-      world.getEntityManager().setInvocationHandler(handler);
     });
     
     world.setFrameDelimiter(new FrameDelimiter(2));
+    
+    setWorld(world);
+  }
+  
+  public Connect4Controller(Connect4World world)
+  {
+    setWorld(world);
+  }
+  
+  private void setWorld(Connect4World world)
+  {
+    this.world = world;
+    
+    StaticInvocationHandler handler = new StaticInvocationHandler();
+    for (Connect4Player player : world.getPlayers())
+      handler.register(player, new RandomStrategy());
+    world.getEntityManager().setInvocationHandler(handler);
   }
   
   @Override
