@@ -3,6 +3,7 @@ package one.koslowski.worlds.ui.wizard;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.layout.FillLayout;
@@ -14,7 +15,6 @@ import org.eclipse.swt.widgets.Group;
 
 import com.google.common.eventbus.Subscribe;
 
-import one.koslowski.wizard.api.ScoreTable;
 import one.koslowski.wizard.api.WizardCard;
 import one.koslowski.wizard.api.WizardPlayer;
 import one.koslowski.wizard.api.WizardTrick;
@@ -33,7 +33,7 @@ class UIWizardPlayer extends Composite
   // +++ API +++ //
   WizardWorld  world;
   WizardPlayer player;
-  ScoreTable   scores;
+  // ScoreTable scores;
   
   private boolean isDealer;
   
@@ -50,7 +50,7 @@ class UIWizardPlayer extends Composite
     this.player = player;
     
     this.world = context.getWorld();
-    this.scores = context.getScoreTable();
+    // this.scores = context.getScoreTable();
     this.isDealer = context.getDealer() == player;
     
     tricks = new CLabel(this, SWT.NONE);
@@ -64,7 +64,7 @@ class UIWizardPlayer extends Composite
     layout.marginHeight = layout.marginWidth = 5;
     group.setLayout(layout);
     cards = new Composite(group, SWT.DOUBLE_BUFFERED);
-    cards.addPaintListener(new CardListener(scores.getMaxRoundCount()));
+    cards.addPaintListener(new CardListener(context.getScoreTable().getMaxRoundCount()));
     
     // TODO Layout
     trick = new Composite(this, SWT.DOUBLE_BUFFERED);
@@ -90,7 +90,7 @@ class UIWizardPlayer extends Composite
       else
         addTrickCard(trick.getCard(player));
         
-    updateTricks();
+    updateTricks(getPredictedTricks());
   }
   
   @Subscribe
@@ -98,7 +98,9 @@ class UIWizardPlayer extends Composite
   {
     isDealer = WizardWorld.getContext().getDealer() == player;
     
-    WorldKit.UI.async(this, () -> cleanup());
+    Pair<Integer, Integer> tuple = getPredictedTricks();
+    
+    WorldKit.UI.async(this, () -> cleanup(tuple));
   }
   
   @Subscribe
@@ -106,14 +108,18 @@ class UIWizardPlayer extends Composite
   {
     if (event.getSource() == player)
     {
-      WorldKit.UI.async(tricks, () -> updateTricks());
+      Pair<Integer, Integer> tuple = getPredictedTricks();
+      
+      WorldKit.UI.async(tricks, () -> updateTricks(tuple));
     }
   }
   
   @Subscribe
   public void onTrickStarted(TrickStartedEvent event)
   {
-    WorldKit.UI.async(this, () -> cleanup());
+    Pair<Integer, Integer> tuple = getPredictedTricks();
+    
+    WorldKit.UI.async(this, () -> cleanup(tuple));
   }
   
   @Subscribe
@@ -144,6 +150,8 @@ class UIWizardPlayer extends Composite
     if (event.getTrick().getPlayer() == player)
       cards.addAll(event.getTrick().getCards());
       
+    Pair<Integer, Integer> tuple = getPredictedTricks();
+    
     WorldKit.UI.async(trick, () ->
     {
       removeTrickCards();
@@ -153,7 +161,7 @@ class UIWizardPlayer extends Composite
         for (WizardCard card : cards)
           addTrickCard(card);
           
-        updateTricks();
+        updateTricks(tuple);
         
         layout();
       }
@@ -202,17 +210,15 @@ class UIWizardPlayer extends Composite
       child.dispose();
   }
   
-  void updateTricks()
+  void updateTricks(Pair<Integer, Integer> tuple)
   {
     String text = "";
     
-    text += player.getTricks().size();
+    text += tuple.getLeft();
     
-    Integer predicted = scores.getPredictedTricks(player);
-    
-    if (predicted != null)
+    if (tuple.getRight() != null)
     {
-      text += " / " + predicted;
+      text += " / " + tuple.getRight();
     }
     
     tricks.setText(text);
@@ -222,11 +228,18 @@ class UIWizardPlayer extends Composite
     layout();
   }
   
-  void cleanup()
+  void cleanup(Pair<Integer, Integer> tuple)
   {
     removeTrickCards();
-    updateTricks();
+    updateTricks(tuple);
     
     trick.redraw();
+  }
+  
+  private Pair<Integer, Integer> getPredictedTricks()
+  {
+    Integer predicted = WizardWorld.getContext().getScoreTable().getPredictedTricks(player);
+    
+    return Pair.of(player.getTricks().size(), predicted);
   }
 }

@@ -2,11 +2,11 @@ package one.koslowski.world.api.event;
 
 import one.koslowski.world.api.World;
 
-public class WorldResumeEvent extends WorldStateEvent
+public class WorldStartedEvent extends WorldStateEvent
 {
   private static final long serialVersionUID = 1L;
   
-  public WorldResumeEvent(World source)
+  public WorldStartedEvent(World source)
   {
     super(source);
   }

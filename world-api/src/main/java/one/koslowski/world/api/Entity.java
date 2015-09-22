@@ -147,11 +147,6 @@ public class Entity implements Serializable
     }
   }
   
-  private Object writeReplace() throws ObjectStreamException
-  {
-    return new EntityReference(this);
-  }
-  
   protected final EntityContext getContext()
   {
     if (ctx == null)
@@ -166,6 +161,14 @@ public class Entity implements Serializable
       throw new IllegalArgumentException();
       
     ctx.getWorld().publishEvent(event);
+  }
+  
+  protected final Object writeReplace() throws ObjectStreamException
+  {
+    if (getContext().getManager().fullSerialize)
+      return this;
+    else
+      return new EntityReference(this);
   }
   
   @Override
@@ -312,8 +315,10 @@ public class Entity implements Serializable
     }
   }
   
-  private static class EntityReference
+  private static final class EntityReference implements Serializable
   {
+    private static final long serialVersionUID = 1L;
+    
     private long id;
     
     private EntityReference(Entity entity)
@@ -327,18 +332,6 @@ public class Entity implements Serializable
     }
   }
   
-  @SuppressWarnings("unused")
-  private class EntitySweeperTask implements Runnable
-  {
-    @Override
-    public void run()
-    {
-      // LOG.warn("Entity leaked: " + entity);
-      
-      ctx.getManager().unregister(Entity.this);
-    }
-  }
-
   @SuppressWarnings("unchecked")
   public interface EntityInvocationStrategy<E extends Entity>
   {

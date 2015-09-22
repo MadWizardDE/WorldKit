@@ -1,12 +1,15 @@
 package one.koslowski.wizard.api;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public final class ScoreTable
+public final class ScoreTable implements Serializable
 {
+  private static final long serialVersionUID = 1L;
+  
   private List<WizardPlayer> players;
   
   private List<Map<WizardPlayer, Round>> rounds;
@@ -143,8 +146,10 @@ public final class ScoreTable
     rounds.add(new HashMap<>(getPlayerCount()));
   }
   
-  public class Round
+  public class Round implements Serializable
   {
+    private static final long serialVersionUID = 1L;
+    
     private Integer score;
     private Integer tricks;
     private Boolean win;

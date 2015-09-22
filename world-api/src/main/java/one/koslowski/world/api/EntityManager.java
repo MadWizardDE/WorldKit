@@ -1,14 +1,13 @@
 package one.koslowski.world.api;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EventObject;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.WeakHashMap;
 
-import one.koslowski.world.api.event.EntityEnterEvent;
-import one.koslowski.world.api.event.EntityExitEvent;
+import one.koslowski.world.api.World.WorldContext;
 import one.koslowski.world.api.event.strategy.BroadcastStrategy;
 import one.koslowski.world.api.exception.EntityInvocationException;
 
@@ -20,7 +19,9 @@ public class EntityManager implements EventListener
   
   EntityInvocationHandler invocationHandler;
   
-  private Map<Entity, Void> entities;
+  private Map<Long, Entity> entities;
+  
+  boolean fullSerialize = false;
   
   long entityID = 0;
   
@@ -65,18 +66,17 @@ public class EntityManager implements EventListener
     this.invocationHandler = invocationHandler;
   }
   
-  Set<Entity> getEntities()
+  Collection<Entity> getEntities()
   {
-    return entities.keySet();
+    return entities.values();
   }
   
   void register(Entity entity)
   {
     entity.id = ++entityID;
     entity.ctx = entity.new EntityContext(this);
-    entity.publishEvent(new EntityEnterEvent(entity));
     
-    entities.put(entity, null);
+    entities.put(entity.id, entity);
   }
   
   Object invoke(EntityInvocation invocation) throws Throwable
@@ -93,7 +93,6 @@ public class EntityManager implements EventListener
   
   void unregister(Entity entity)
   {
-    entity.publishEvent(new EntityExitEvent(entity));
     entity.ctx = null;
     
     entities.remove(entity);
@@ -106,16 +105,11 @@ public class EntityManager implements EventListener
       strategy.processEvent((WorldEvent) event);
   }
   
-  public class EntityContext implements Context
+  public class EntityContext extends WorldContext<World>
   {
     EntityContext()
     {
-    
-    }
-    
-    public World getWorld()
-    {
-      return world;
+      world.super();
     }
     
     public EntityManager getManager()
@@ -144,16 +138,6 @@ public class EntityManager implements EventListener
     }
     
     @SuppressWarnings("unchecked")
-    public <T extends Entity> T getEntityByID(long id)
-    {
-      for (Entity entity : getManager().getEntities())
-        if (entity.id == id)
-          return (T) entity;
-          
-      return null;
-    }
-    
-    @SuppressWarnings("unchecked")
     public <T extends Entity> List<T> getEntities(Class<T> type)
     {
       List<T> result = new ArrayList<>();
@@ -163,6 +147,12 @@ public class EntityManager implements EventListener
           result.add((T) entity);
           
       return result;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public <T extends Entity> T getEntityByID(long id)
+    {
+      return (T) getManager().entities.get(id);
     }
     
     public List<Entity> getEverything()

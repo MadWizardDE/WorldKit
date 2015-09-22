@@ -1,5 +1,8 @@
 package one.koslowski.worlds.ui;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.EventObject;
 
 import org.eclipse.jface.action.Action;
@@ -7,6 +10,7 @@ import org.eclipse.jface.action.CoolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.action.ToolBarManager;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.WindowManager;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Point;
@@ -15,6 +19,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 
 import com.google.common.eventbus.EventBus;
@@ -22,6 +27,7 @@ import com.google.common.eventbus.Subscribe;
 
 import one.koslowski.world.api.EventListener;
 import one.koslowski.world.api.FrameDelimiter;
+import one.koslowski.world.api.World.WorldState;
 import one.koslowski.world.api.WorldManager;
 import one.koslowski.world.api.event.WorldStateEvent;
 import one.koslowski.worlds.WorldKit;
@@ -41,8 +47,11 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
   
   // +++ Actions +++ //
   
-  PlayAction  actionPlay;
-  PauseAction actionPause;
+  SaveAction     actionSave;
+  PlayAction     actionPlay;
+  PauseAction    actionPause;
+  SpeedUpAction  actionSpeedUp;
+  SlowDownAction actionSlowDown;
   
   public WorldWindow()
   {
@@ -58,7 +67,7 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     // setShellStyle(SWT.SHELL_TRIM);
     
     addMenuBar();
-    addToolBar(SWT.BORDER);
+    addToolBar(SWT.BORDER | SWT.FLAT);
     // addCoolBar(SWT.FLAT | SWT.BORDER);
   }
   
@@ -93,7 +102,7 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     }
     else
     {
-      shell.setImage(WorldKit.UI.getImage(WorldKit.SharedImages.IMG_WORLD));
+      shell.setImage(WorldKit.SharedImages.WORLD.getImage());
       
       shell.setText("Keine Welt geladen");
     }
@@ -125,9 +134,6 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
         
         worldMenu.add(new Separator());
         
-        worldMenu.add(new SpeedUpAction());
-        worldMenu.add(new SlowDownAction());
-        
         worldMenu.add(new PropertiesAction());
       }
       
@@ -144,8 +150,6 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
           worldMenu.add(worldAction);
         }
       }
-      
-      worldMenu.add(new Separator());
       
       worldMenu.add(new Separator());
       
@@ -172,16 +176,19 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
   {
     ToolBarManager manager = super.createToolBarManager(style);
     
+    manager.add(actionSave = new SaveAction());
+    
+    manager.add(new Separator());
+    
     manager.add(actionPlay = new PlayAction());
     manager.add(actionPause = new PauseAction());
     
+    manager.add(new Separator());
+    
+    manager.add(actionSlowDown = new SlowDownAction());
+    manager.add(actionSpeedUp = new SpeedUpAction());
+    
     return manager;
-  }
-  
-  private void updateToolBar()
-  {
-    actionPlay.update();
-    actionPause.update();
   }
   
   @Override
@@ -212,6 +219,15 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
   protected Control createWorldContents()
   {
     return WorldManager.sync(controller.getWorld(), () -> controller.createContents(container, getMenuBarManager()));
+  }
+  
+  private void updateToolBar()
+  {
+    actionSave.update();
+    actionPlay.update();
+    actionPause.update();
+    actionSpeedUp.update();
+    actionSlowDown.update();
   }
   
   @Override
@@ -298,9 +314,17 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     @Subscribe
     public void onWorldStateChange(WorldStateEvent event)
     {
-      updateToolBar();
-      
-      container.setEnabled(!event.getState().isSuspended());
+      WorldKit.UI.async(control, () ->
+      {
+        try
+        {
+          updateToolBar();
+        }
+        catch (Exception e)
+        {
+          e.printStackTrace();
+        }
+      });
     }
   }
   
@@ -313,6 +337,9 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
       super(type.getName());
       
       this.type = type;
+      
+      if (type == WorldType.CONWAYS)
+        setEnabled(false);
     }
     
     @Override
@@ -403,35 +430,15 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     }
   }
   
-  class SpeedUpAction extends Action
+  class SaveAction extends Action
   {
-    public SpeedUpAction()
+    public SaveAction()
     {
-      super("Schneller", SWT.NONE);
+      super("&Speichern");
       
-      setAccelerator(SWT.CTRL | '+');
-      setEnabled(controller.getWorld().getFrameDelimiter() != null);
-    }
-    
-    @Override
-    public void run()
-    {
-      WorldManager.sync(controller.getWorld(), () ->
-      {
-        FrameDelimiter d = controller.getWorld().getFrameDelimiter();
-        
-        d.setFPS(d.getFPS() * 2);
-      });
-    }
-  }
-  
-  class PlayAction extends Action
-  {
-    public PlayAction()
-    {
-      super("Starten", SWT.PUSH);
+      setImageDescriptor(WorldKit.SharedImages.SAVE.getDescriptor());
       
-      setImageDescriptor(WorldKit.UI.getImageDescriptor(WorldKit.SharedImages.IMG_RESUME));
+      setAccelerator(SWT.CTRL | 'S');
       
       update();
     }
@@ -439,7 +446,62 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     private void update()
     {
       setEnabled(enabled());
-      setChecked(false);
+    }
+    
+    private boolean enabled()
+    {
+      if (controller == null)
+        return false;
+        
+      return !controller.getWorld().getState().isRunning();
+    }
+    
+    @Override
+    public void run()
+    {
+      FileDialog fileDialog = new FileDialog(getShell(), SWT.SAVE);
+      fileDialog.setFilterExtensions(new String[] { "*.world" });
+      fileDialog.setText("Speichern...");
+      fileDialog.open();
+      
+      if (!fileDialog.getFileName().isEmpty())
+      {
+        File file = new File(fileDialog.getFilterPath() + "/"
+            + fileDialog.getFileName());
+            
+        try (FileOutputStream output = new FileOutputStream(file))
+        {
+          WorldManager.write(controller.getWorld(), output);
+        }
+        catch (IOException e)
+        {
+          MessageDialog.openError(getShell(), "Fehler", "Speichern fehlgeschlagen");
+          
+          e.printStackTrace();
+          
+          // TODO StatusManager
+          // StatusManager.getManager().handle(new Status(IStatus.ERROR, null, "Speichern
+          // fehlgeschlagen.", e),
+          // StatusManager.BLOCK);
+        }
+      }
+    }
+  }
+  
+  class PlayAction extends Action
+  {
+    public PlayAction()
+    {
+      super("Starten", SWT.NONE);
+      
+      setImageDescriptor(WorldKit.SharedImages.RESUME.getDescriptor());
+      
+      update();
+    }
+    
+    private void update()
+    {
+      setEnabled(enabled());
     }
     
     private boolean enabled()
@@ -462,13 +524,13 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     @Override
     public void run()
     {
-      synchronized (controller.getWorld())
+      WorldManager.sync(controller.getWorld(), () ->
       {
         if (enabled())
         {
           controller.getWorld().getManager().execute(controller.getWorld());
         }
-      }
+      });
     }
   }
   
@@ -476,9 +538,9 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
   {
     public PauseAction()
     {
-      super("Anhalten", SWT.PUSH);
+      super("Anhalten", SWT.NONE);
       
-      setImageDescriptor(WorldKit.UI.getImageDescriptor(WorldKit.SharedImages.IMG_SUSPEND));
+      setImageDescriptor(WorldKit.SharedImages.SUSPEND.getDescriptor());
       
       update();
     }
@@ -486,7 +548,6 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     private void update()
     {
       setEnabled(enabled());
-      setChecked(false);
     }
     
     private boolean enabled()
@@ -509,13 +570,51 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     @Override
     public void run()
     {
-      synchronized (controller.getWorld())
+      WorldManager.sync(controller.getWorld(), () ->
       {
         if (enabled())
         {
           controller.getWorld().interrupt();
         }
-      }
+      });
+    }
+  }
+  
+  class SpeedUpAction extends Action
+  {
+    public SpeedUpAction()
+    {
+      super("Schneller", SWT.NONE);
+      
+      setImageDescriptor(WorldKit.SharedImages.FASTER.getDescriptor());
+      
+      setAccelerator(SWT.CTRL | '+');
+      
+      update();
+    }
+    
+    private void update()
+    {
+      setEnabled(enabled());
+    }
+    
+    private boolean enabled()
+    {
+      if (controller == null || controller.getWorld().getFrameDelimiter() == null)
+        return false;
+        
+      return controller.getWorld().getState() != WorldState.STOPPED;
+    }
+    
+    @Override
+    public void run()
+    {
+      WorldManager.sync(controller.getWorld(), () ->
+      {
+        FrameDelimiter d = controller.getWorld().getFrameDelimiter();
+        
+        d.setFPS(d.getFPS() * 2);
+      });
     }
   }
   
@@ -525,8 +624,24 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     {
       super("Langsamer", SWT.NONE);
       
+      setImageDescriptor(WorldKit.SharedImages.SLOWER.getDescriptor());
+      
       setAccelerator(SWT.CTRL | '-');
-      setEnabled(controller.getWorld().getFrameDelimiter() != null);
+      
+      update();
+    }
+    
+    private void update()
+    {
+      setEnabled(enabled());
+    }
+    
+    private boolean enabled()
+    {
+      if (controller == null || controller.getWorld().getFrameDelimiter() == null)
+        return false;
+        
+      return controller.getWorld().getState() != WorldState.STOPPED;
     }
     
     @Override

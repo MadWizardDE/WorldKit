@@ -1,5 +1,6 @@
 package one.koslowski.connect4.api;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.EmptyStackException;
 import java.util.List;
@@ -137,8 +138,10 @@ public class Connect4Board extends Entity
     history.clear();
   }
   
-  class Move
+  class Move implements Serializable
   {
+    private static final long serialVersionUID = 1L;
+    
     Connect4Player player;
     
     int x, y;
@@ -152,6 +155,7 @@ public class Connect4Board extends Entity
     }
   }
   
+  @Deprecated
   private enum Axis
   {
     HORIZONTAL(1, 0), VERTICAL(0, 1), DIAGONAL1(1, 1), DIAGONAL2(1, -1);

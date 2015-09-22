@@ -2,9 +2,9 @@ package one.koslowski.worlds.ui;
 
 import java.util.EventObject;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.window.WindowManager;
@@ -12,7 +12,6 @@ import org.eclipse.swt.widgets.Display;
 
 import one.koslowski.world.api.EventListener;
 import one.koslowski.world.api.World;
-import one.koslowski.world.api.World.WorldState;
 import one.koslowski.world.api.WorldManager;
 import one.koslowski.world.api.event.WorldAddedEvent;
 import one.koslowski.world.api.event.WorldRemovedEvent;
@@ -24,11 +23,11 @@ public class WorldWindowManager extends WindowManager implements EventListener
   
   private Map<World, WorldController> controllers;
   
-  private List<WorldController> pendingClose;
+  private Set<WorldController> pendingClose;
   
   {
     controllers = new LinkedHashMap<>();
-    pendingClose = new LinkedList<>();
+    pendingClose = new LinkedHashSet<>();
   }
   
   public WorldWindowManager(WorldManager manager)
@@ -121,7 +120,7 @@ public class WorldWindowManager extends WindowManager implements EventListener
   {
     World world = controller.getWorld();
     
-    if (world.getState() == WorldState.EXECUTING || world.getState().isWaiting())
+    if (world.getState().isRunning())
     {
       pendingClose.add(controller);
       
@@ -170,11 +169,13 @@ public class WorldWindowManager extends WindowManager implements EventListener
   @Override
   public boolean close()
   {
-    for (WorldController controller : getControllers())
-    {
-      removeController(controller);
-    }
+    boolean closedAll = super.close();
     
-    return super.close();
+    // for (WorldController controller : getControllers())
+    // {
+    // removeController(controller);
+    // }
+    
+    return closedAll;
   }
 }

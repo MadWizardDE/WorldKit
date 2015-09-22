@@ -1,5 +1,10 @@
 package one.koslowski.world.api;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.util.EventObject;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -61,6 +66,11 @@ public class WorldManager implements EventListener
   @Override
   public void processEvent(EventObject event)
   {
+    // TODO Event-Debugging
+    String eventName = event.getClass().getSimpleName();
+    String sourceName = event.getSource().getClass().getSimpleName();
+    System.out.println(eventName + " @ " + sourceName);
+    
     if (event instanceof SystemEvent)
     {
       if (event instanceof WorldSuspendedEvent)
@@ -125,14 +135,17 @@ public class WorldManager implements EventListener
   {
     synchronized (world)
     {
-      if (!worlds.containsKey(world))
+      Queue<WorldTask<?>> tasks = worlds.get(world);
+      
+      if (tasks == null)
         throw new IllegalArgumentException("World unknown");
+        
       if (world.getState() == WorldState.EXECUTING)
         throw new IllegalStateException("World is executing");
       if (world.getState() == WorldState.STOPPED)
         throw new IllegalStateException("World has ended");
         
-      if (world.getState() == WorldState.FRESH)
+      if (tasks.isEmpty())
         queue(new WorldTask<Void>(world, world::loop));
         
       if (world.wait != null)
@@ -189,38 +202,61 @@ public class WorldManager implements EventListener
    */
   public static <V> V sync(World world, Callable<V> task)
   {
-    if (world == null || task == null)
-      throw new NullPointerException();
-      
     try
     {
-      // TODO synchroner Aufruf, direkt Exception werfen?
-      
       return new WorldTask<V>(world, task).invoke();
     }
     catch (InterruptedException e)
     {
-      // ignorieren?
-      return null;
+      return null; // TODO ignorieren?
     }
   }
   
-  /**
-   * Führt eine Aufgabe synchron im Kontext der Welt asynchron zum Aufrufer aus.
-   * 
-   * (in neuem Thread)
-   * 
-   * @param world
-   *          Welt
-   * @param task
-   *          Aufgabe
-   */
-  public static void async(World world, Runnable task)
+  public static void write(World world, OutputStream output) throws IOException
   {
-    if (world == null || world.manager == null || task == null)
-      throw new IllegalArgumentException();
-      
-    world.manager.queue(new WorldTask<Void>(world, task));
+    IOException io = sync(world, () ->
+    {
+      try (ObjectOutputStream stream = new ObjectOutputStream(output))
+      {
+        world.entityManager.fullSerialize = true;
+        
+        stream.writeObject(world);
+        
+        return null;
+      }
+      catch (IOException e)
+      {
+        return e;
+      }
+      finally
+      {
+        world.entityManager.fullSerialize = false;
+      }
+    });
+    
+    if (io != null)
+      throw io;
+  }
+  
+  public static World read(InputStream input) throws ClassNotFoundException, IOException
+  {
+    Object o = sync(null, () ->
+    {
+      try (ObjectInputStream stream = new ObjectInputStream(input))
+      {
+        return (World) stream.readObject();
+      }
+      catch (IOException e)
+      {
+        return e;
+      }
+    });
+    
+    if (o instanceof ClassNotFoundException)
+      throw (ClassNotFoundException) o;
+    if (o instanceof IOException)
+      throw (IOException) o;
+    return (World) o;
   }
   
   private class WorldExecuter extends ScheduledThreadPoolExecutor

@@ -103,7 +103,7 @@ class WorldTask<V> extends FutureTask<V>
     
     try
     {
-      if (parent == null)
+      if (world != null && parent == null)
         synchronized (world)
         {
           world.task = this; // Highlander

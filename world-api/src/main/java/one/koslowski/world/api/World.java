@@ -1,5 +1,8 @@
 package one.koslowski.world.api;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.EventObject;
 import java.util.List;
@@ -12,8 +15,8 @@ import java.util.concurrent.Future;
 
 import one.koslowski.world.api.EntityManager.EntityContext;
 import one.koslowski.world.api.event.ExceptionEvent;
-import one.koslowski.world.api.event.WorldResumeEvent;
-import one.koslowski.world.api.event.WorldStartEvent;
+import one.koslowski.world.api.event.WorldResumedEvent;
+import one.koslowski.world.api.event.WorldStartedEvent;
 import one.koslowski.world.api.event.WorldSuspendedEvent;
 
 public abstract class World implements Serializable
@@ -26,6 +29,14 @@ public abstract class World implements Serializable
   
   transient EntityManager entityManager;
   
+  transient WorldTask<?> task;
+  
+  // +++ Steuerung +++ //
+  
+  private transient Map<Class<?>, Context> contexts;
+  private transient List<EventListener>    listeners;
+  private transient ExceptionHandler       exceptionHandler;
+  
   // +++ Welt-Zustand +++ //
   
   long frame;
@@ -34,17 +45,9 @@ public abstract class World implements Serializable
   
   private FrameDelimiter frameDelimiter;
   
-  private transient List<EventListener> listeners;
-  
-  private transient ExceptionHandler exceptionHandler;
-  
-  private transient Map<Class<?>, Context> contexts;
-  
   protected Phase phase = null;
   
   volatile Entity wait;
-  
-  WorldTask<?> task;
   
   {
     listeners = new CopyOnWriteArrayList<>();
@@ -58,15 +61,6 @@ public abstract class World implements Serializable
     
     // Entity-Manager einrichten
     addListener(entityManager = new EntityManager(this));
-    
-    // TODO Event-Debugging
-    addListener((EventObject event) ->
-    {
-      String eventName = event.getClass().getSimpleName();
-      String sourceName = event.getSource().getClass().getSimpleName();
-      
-      System.out.println(eventName + " @ " + sourceName);
-    });
     
     // Default ExceptionHandler
     exceptionHandler = new DefaultExceptionHandler();
@@ -103,7 +97,7 @@ public abstract class World implements Serializable
   
   public static EntityContext getEntityContext()
   {
-    return (EntityContext) getWorld().contexts.get(EntityContext.class);
+    return getContext(EntityContext.class);
   }
   
   public WorldState getState()
@@ -227,16 +221,18 @@ public abstract class World implements Serializable
    */
   final void loop()
   {
+    boolean first = state == WorldState.FRESH;
+    
     if (phase == null)
       return;
       
-    if (state == WorldState.FRESH)
-      publishEvent(new WorldStartEvent(this));
-    else if (state.isSuspended())
-      publishEvent(new WorldResumeEvent(this));
-      
     state = WorldState.EXECUTING;
     
+    if (first)
+      publishEvent(new WorldStartedEvent(this));
+    else
+      publishEvent(new WorldResumedEvent(this));
+      
     try
     {
       if (frameDelimiter != null)
@@ -269,6 +265,23 @@ public abstract class World implements Serializable
         manager.queue(new WorldTask<Void>(this, this::loop)); // nächste Ausführung
       }
     }
+  }
+  
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException
+  {
+    task = WorldManager.getTask();
+    task.world = this;
+    
+    in.defaultReadObject();
+    
+    entityManager.entityID = in.readLong();
+  }
+  
+  private void writeObject(ObjectOutputStream out) throws IOException
+  {
+    out.defaultWriteObject();
+    
+    out.writeLong(entityManager.entityID);
   }
   
   /**
@@ -371,6 +384,11 @@ public abstract class World implements Serializable
     public boolean isWaiting()
     {
       return this == THROTTLING || this == WAITING;
+    }
+    
+    public boolean isRunning()
+    {
+      return isWaiting() || this == WorldState.EXECUTING;
     }
     
     public boolean isSuspended()

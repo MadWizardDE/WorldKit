@@ -71,7 +71,7 @@ public class WorldKit
     }
   }
   
-  public static class UserInterface implements SharedImages, SharedFonts
+  public static class UserInterface
   {
     private Map<WorldType, ResourceManager> resources;
     private Map<WorldType, ImageRegistry>   images;
@@ -124,7 +124,6 @@ public class WorldKit
       return manager;
     }
     
-    @Override
     public ImageRegistry getImageRegistry(WorldType type)
     {
       if (images == null)
@@ -143,12 +142,45 @@ public class WorldKit
       return registry;
     }
     
+    public Image getImage(String key)
+    {
+      return getImageRegistry(null).get(key);
+    }
+    
+    public Image getImage(WorldType type, String key)
+    {
+      return getImageRegistry(type).get(key);
+    }
+    
+    public Image getImage(Class<?> type)
+    {
+      return getImageRegistry(null).get(type.getName());
+    }
+    
+    public ImageDescriptor getImageDescriptor(String key)
+    {
+      return getImageRegistry(null).getDescriptor(key);
+    }
+    
+    public ImageDescriptor getImageDescriptor(WorldType type, String key)
+    {
+      return getImageRegistry(type).getDescriptor(key);
+    }
+    
+    public ImageDescriptor getImageDescriptor(Class<?> type)
+    {
+      return getImageRegistry(null).getDescriptor(type.getName());
+    }
+    
     private void loadImages(ImageRegistry registry)
     {
-      registry.put(IMG_WORLD, ImageDescriptor.createFromFile(WorldWindow.class, "world.png"));
+      registry.put(SharedImages.WORLD.name(), ImageDescriptor.createFromFile(WorldWindow.class, "world.png"));
       
-      registry.put(IMG_RESUME, ImageDescriptor.createFromFile(WorldWindow.class, "resume.gif"));
-      registry.put(IMG_SUSPEND, ImageDescriptor.createFromFile(WorldWindow.class, "suspend.gif"));
+      registry.put(SharedImages.SAVE.name(), ImageDescriptor.createFromFile(WorldWindow.class, "save.gif"));
+      registry.put(SharedImages.FASTER.name(), ImageDescriptor.createFromFile(WorldWindow.class, "faster.gif"));
+      registry.put(SharedImages.SLOWER.name(), ImageDescriptor.createFromFile(WorldWindow.class, "slower.gif"));
+      registry.put(SharedImages.RESUME.name(), ImageDescriptor.createFromFile(WorldWindow.class, "resume.gif"));
+      registry.put(SharedImages.SUSPEND.name(), ImageDescriptor.createFromFile(WorldWindow.class, "suspend.gif"));
       
       // TODO Connect4-Icon in SWT zeichnen
       loadTypeImage(registry, Connect4Controller.class, "icon.png");
@@ -160,7 +192,6 @@ public class WorldKit
       registry.put(type.getName(), ImageDescriptor.createFromFile(type, path));
     }
     
-    @Override
     public FontRegistry getFontRegistry(WorldType type)
     {
       if (fonts == null)
@@ -175,60 +206,41 @@ public class WorldKit
       
       return registry;
     }
-  }
-  
-  public interface SharedImages
-  {
-    public final static String IMG_WORLD = "IMG_WORLD";
     
-    public final static String IMG_RESUME  = "IMG_RESUME";
-    public final static String IMG_SUSPEND = "IMG_SUSPEND";
-    
-    public ImageRegistry getImageRegistry(WorldType type);
-    
-    public default Image getImage(String key)
-    {
-      return getImageRegistry(null).get(key);
-    }
-    
-    public default Image getImage(WorldType type, String key)
-    {
-      return getImageRegistry(type).get(key);
-    }
-    
-    public default Image getImage(Class<?> type)
-    {
-      return getImageRegistry(null).get(type.getName());
-    }
-    
-    public default ImageDescriptor getImageDescriptor(String key)
-    {
-      return getImageRegistry(null).getDescriptor(key);
-    }
-    
-    public default ImageDescriptor getImageDescriptor(WorldType type, String key)
-    {
-      return getImageRegistry(type).getDescriptor(key);
-    }
-    
-    public default ImageDescriptor getImageDescriptor(Class<?> type)
-    {
-      return getImageRegistry(null).getDescriptor(type.getName());
-    }
-  }
-  
-  public interface SharedFonts
-  {
-    public FontRegistry getFontRegistry(WorldType type);
-    
-    public default Font getFont(WorldType type, String key)
+    public Font getFont(WorldType type, String key)
     {
       return getFontRegistry(type).get(key);
     }
     
-    public default FontDescriptor getFontDescriptor(WorldType type, String key)
+    public FontDescriptor getFontDescriptor(WorldType type, String key)
     {
       return getFontRegistry(type).getDescriptor(key);
     }
+  }
+  
+  public enum SharedImages
+  {
+    WORLD,
+    
+    SAVE,
+    
+    FASTER, SLOWER,
+    
+    RESUME, SUSPEND;
+    
+    public Image getImage()
+    {
+      return WorldKit.UI.getImage(this.name());
+    }
+    
+    public ImageDescriptor getDescriptor()
+    {
+      return WorldKit.UI.getImageDescriptor(this.name());
+    }
+  }
+  
+  public enum SharedFonts
+  {
+  
   }
 }
