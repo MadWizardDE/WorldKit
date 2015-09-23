@@ -100,7 +100,7 @@ public class EntityManager implements EventListener
   
   void unregister(Entity entity)
   {
-    entities.remove(entity);
+    entities.remove(entity.id);
     
     entity.bus.unregister(entity);
     entity.bus = null;

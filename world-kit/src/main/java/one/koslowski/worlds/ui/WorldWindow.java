@@ -71,6 +71,7 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     // setShellStyle(SWT.SHELL_TRIM);
     
     addMenuBar();
+    // addToolBar(SWT.FLAT);
     addToolBar(SWT.BORDER | SWT.FLAT);
     // addCoolBar(SWT.FLAT | SWT.BORDER);
   }
@@ -387,8 +388,8 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
       if (!fileDialog.getFileName().isEmpty())
       {
         File file = new File(fileDialog.getFilterPath() + "/"
-            + fileDialog.getFileName());
-            
+                + fileDialog.getFileName());
+                
         try (FileInputStream input = new FileInputStream(file))
         {
           World world = WorldManager.read(input);
@@ -509,8 +510,8 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
       if (!fileDialog.getFileName().isEmpty())
       {
         File file = new File(fileDialog.getFilterPath() + "/"
-            + fileDialog.getFileName());
-            
+                + fileDialog.getFileName());
+                
         try (FileOutputStream output = new FileOutputStream(file))
         {
           WorldManager.write(controller.getWorld(), output);

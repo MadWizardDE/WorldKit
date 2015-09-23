@@ -75,8 +75,6 @@ class WizardControl extends Composite implements EventListener
   
   UIScoreTable scoreWindow;
   
-  volatile boolean started;
-  
   {
     players = new ArrayList<>();
   }
@@ -102,6 +100,7 @@ class WizardControl extends Composite implements EventListener
       if (context.getTrumpCard() != null)
       {
         trumpCard = new UIWizardCard(cards, context.getTrumpCard());
+        trumpCard.highlightColor = UIWizardCard.getColor(context.getTrumpColor());
         trumpCard.addPaintListener(trumpCard);
       }
     }

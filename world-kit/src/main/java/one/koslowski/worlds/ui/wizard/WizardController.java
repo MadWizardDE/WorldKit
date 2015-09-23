@@ -50,11 +50,21 @@ public class WizardController implements WorldController
     });
     
     world.setFrameDelimiter(new FrameDelimiter(1));
+    
+    addPlayers(world);
   }
   
   public WizardController(WizardWorld world)
   {
-    this.world = world;
+    addPlayers(this.world = world);
+  }
+  
+  private void addPlayers(WizardWorld world)
+  {
+    StaticInvocationHandler handler = new StaticInvocationHandler();
+    for (WizardPlayer player : world.getPlayers())
+      handler.register(player, new RandomStrategy());
+    world.getEntityManager().setInvocationHandler(handler);
   }
   
   @Override

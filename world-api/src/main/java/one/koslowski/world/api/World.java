@@ -227,16 +227,16 @@ public abstract class World implements Serializable
    */
   final void loop()
   {
-    boolean first = state == WorldState.FRESH;
+    WorldState state = this.state;
     
     if (phase == null)
       return;
       
-    state = WorldState.EXECUTING;
+    this.state = WorldState.EXECUTING;
     
-    if (first)
+    if (state == WorldState.FRESH)
       publishEvent(new WorldStartedEvent(this));
-    else
+    else if (state.isSuspended())
       publishEvent(new WorldResumedEvent(this));
       
     try
@@ -297,7 +297,7 @@ public abstract class World implements Serializable
    * 
    * @param fork
    *          Fork-Methode (ohne Rückgabewert)
-   * 
+   *          
    * @return Fork-Task
    */
   protected static Future<?> fork(Runnable fork)
@@ -310,7 +310,7 @@ public abstract class World implements Serializable
    * 
    * @param fork
    *          Fork-Methode (mit Rückgabewert)
-   * 
+   *          
    * @return Fork-Task
    */
   protected static <V> Future<V> fork(Callable<V> fork)
@@ -330,9 +330,9 @@ public abstract class World implements Serializable
    * 
    * @param future
    *          Fork-Task (Rückgabewert von fork())
-   * 
+   *          
    * @return Ergebnis des Fork-Tasks
-   * 
+   *         
    * @throws InterruptedException
    *           unterbrochen, beim Warten auf den Fork-Task
    * @throws RuntimeException

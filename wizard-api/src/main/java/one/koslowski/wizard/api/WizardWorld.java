@@ -233,6 +233,8 @@ public class WizardWorld extends World
     
     publishEvent(new TrickPlayedEvent(trick));
     
+    trick = null;
+    
     // alle Karten gespielt?
     if (player.getCards().isEmpty())
       return this::countTricks;

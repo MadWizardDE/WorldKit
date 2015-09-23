@@ -38,18 +38,16 @@ public class Connect4Controller implements WorldController
     
     world.setFrameDelimiter(new FrameDelimiter(2));
     
-    setWorld(world);
+    addPlayers(world);
   }
   
   public Connect4Controller(Connect4World world)
   {
-    setWorld(world);
+    addPlayers(this.world = world);
   }
   
-  private void setWorld(Connect4World world)
+  private void addPlayers(Connect4World world)
   {
-    this.world = world;
-    
     StaticInvocationHandler handler = new StaticInvocationHandler();
     for (Connect4Player player : world.getPlayers())
       handler.register(player, new RandomStrategy());
