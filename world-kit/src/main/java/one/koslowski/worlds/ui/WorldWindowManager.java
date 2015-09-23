@@ -1,6 +1,5 @@
 package one.koslowski.worlds.ui;
 
-import java.util.EventObject;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -10,15 +9,16 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.jface.window.WindowManager;
 import org.eclipse.swt.widgets.Display;
 
-import one.koslowski.world.api.EventListener;
 import one.koslowski.world.api.World;
 import one.koslowski.world.api.World.WorldState;
+import one.koslowski.world.api.WorldEvent;
+import one.koslowski.world.api.WorldEventListener;
 import one.koslowski.world.api.WorldManager;
 import one.koslowski.world.api.event.WorldAddedEvent;
 import one.koslowski.world.api.event.WorldRemovedEvent;
 import one.koslowski.world.api.event.WorldSuspendedEvent;
 
-public class WorldWindowManager extends WindowManager implements EventListener
+public class WorldWindowManager extends WindowManager implements WorldEventListener
 {
   private WorldManager manager;
   
@@ -38,65 +38,74 @@ public class WorldWindowManager extends WindowManager implements EventListener
   }
   
   @Override
-  public void processEvent(EventObject event)
+  public void processEvent(WorldEvent event)
   {
     if (event instanceof WorldAddedEvent)
+      onAdd((WorldAddedEvent) event);
+    else if (event instanceof WorldSuspendedEvent)
+      onSuspend((WorldSuspendedEvent) event);
+    else if (event instanceof WorldRemovedEvent)
+      onRemove((WorldRemovedEvent) event);
+  }
+  
+  private void onAdd(WorldAddedEvent event)
+  {
+    Display.getDefault().asyncExec(() ->
     {
-      Display.getDefault().asyncExec(() ->
+      WorldController controller = controllers.get(event.getSource());
+      
+      WorldWindow window = getWindow(controller);
+      
+      if (window == null)
       {
-        WorldController controller = controllers.get(event.getSource());
-        
-        WorldWindow window = getWindow(controller);
+        window = getWindow(null);
         
         if (window == null)
         {
-          window = getWindow(null);
-          
-          if (window == null)
-          {
-            add(window = new WorldWindow());
-          }
+          add(window = new WorldWindow());
         }
-        
-        window.setController(controller);
-      });
-    }
-    else if (event instanceof WorldSuspendedEvent)
+      }
+      
+      window.setController(controller);
+    });
+  }
+  
+  private void onSuspend(WorldSuspendedEvent event)
+  {
+    Display.getDefault().asyncExec(() ->
     {
-      Display.getDefault().asyncExec(() ->
-      {
-        WorldController controller = controllers.get(event.getSource());
-        
-        if (pendingClose.remove(controller))
-          removeController(controllers.get(event.getSource()));
-      });
-    }
-    else if (event instanceof WorldRemovedEvent)
+      WorldController controller = controllers.get(event.getSource());
+      
+      if (pendingClose.remove(controller))
+        removeController(controllers.get(event.getSource()));
+    });
+  }
+  
+  private void onRemove(WorldRemovedEvent event)
+  {
+    Display.getDefault().asyncExec(() ->
     {
-      Display.getDefault().asyncExec(() ->
+      WorldController controller = controllers.remove(event.getSource());
+      
+      WorldWindow window = getWindow(controller);
+      
+      if (window != null)
       {
-        WorldController controller = controllers.remove(event.getSource());
+        window.setController(null);
         
-        WorldWindow window = getWindow(controller);
-        
-        if (window != null)
+        if (getWindowCount() > 1)
+          window.close();
+        else
         {
-          window.setController(null);
-          
-          if (getWindowCount() > 1)
-            window.close();
-          else
+          // den nächstbesten Controller anzeigen
+          for (WorldController c : controllers.values())
           {
-            // den nächstbesten Controller anzeigen
-            for (WorldController c : controllers.values())
-            {
-              window.setController(c);
-              break;
-            }
+            window.setController(c);
+            break;
           }
         }
-      });
-    }
+      }
+    });
   }
   
   public WorldController[] getControllers()

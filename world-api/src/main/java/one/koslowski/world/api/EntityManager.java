@@ -2,17 +2,17 @@ package one.koslowski.world.api;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EventObject;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
 import com.google.common.eventbus.EventBus;
 
+import one.koslowski.world.api.event.SystemEvent;
 import one.koslowski.world.api.event.strategy.BroadcastStrategy;
 import one.koslowski.world.api.exception.EntityInvocationException;
 
-public class EntityManager implements EventListener
+public class EntityManager implements WorldEventListener
 {
   World world;
   
@@ -109,10 +109,10 @@ public class EntityManager implements EventListener
   }
   
   @Override
-  public void processEvent(EventObject event)
+  public void processEvent(WorldEvent event)
   {
-    if (event instanceof WorldEvent)
-      strategy.processEvent((WorldEvent) event);
+    if (!(event instanceof SystemEvent))
+      strategy.processEvent(event);
   }
   
   public class EntityContext

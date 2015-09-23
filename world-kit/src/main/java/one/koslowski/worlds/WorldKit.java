@@ -16,6 +16,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 
 import one.koslowski.world.api.WorldManager;
+import one.koslowski.worlds.network.WorldHost;
 import one.koslowski.worlds.ui.WorldWindow;
 import one.koslowski.worlds.ui.WorldWindowManager;
 import one.koslowski.worlds.ui.connect4.Connect4Controller;
@@ -28,13 +29,11 @@ import one.koslowski.worlds.ui.wizard.WizardController;
  * 
  * - Netzwerk-Funktion + GUI: Server-Browser
  * 
- * - Serialize
+ * - Session-Analyse
  * 
  * - Lokaler Spieler
  * 
  * - KI
- * 
- * - Play/Pause
  * 
  * - Headless Mode
  * 
@@ -42,15 +41,20 @@ import one.koslowski.worlds.ui.wizard.WizardController;
  */
 public class WorldKit
 {
-  public static final UserInterface UI = new UserInterface();
+  public static final WorldManager  MANAGER = new WorldManager();
+  public static final WorldHost     HOST    = new WorldHost(MANAGER);
+  public static final UserInterface UI      = new UserInterface();
   
   public static void main(String args[])
   {
-    WorldManager worldManager = new WorldManager();
-    
+    startGUI();
+  }
+  
+  public static void startGUI()
+  {
     Display display = new Display();
     
-    WorldWindowManager windowManager = new WorldWindowManager(worldManager);
+    WorldWindowManager windowManager = new WorldWindowManager(MANAGER);
     windowManager.add(new WorldWindow()); // empty window
     
     try

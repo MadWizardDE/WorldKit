@@ -1,7 +1,6 @@
 package one.koslowski.worlds.ui.wizard;
 
 import java.util.ArrayList;
-import java.util.EventObject;
 import java.util.List;
 
 import org.eclipse.jface.action.MenuManager;
@@ -24,11 +23,12 @@ import one.koslowski.wizard.api.WizardWorld.WizardContext;
 import one.koslowski.wizard.api.events.CardDrawnEvent;
 import one.koslowski.wizard.api.events.DeckShuffeledEvent;
 import one.koslowski.wizard.api.events.TrumpColorEvent;
-import one.koslowski.world.api.EventListener;
+import one.koslowski.world.api.WorldEventListener;
+import one.koslowski.world.api.WorldEvent;
 import one.koslowski.worlds.WorldKit;
 import one.koslowski.worlds.WorldType;
 
-class WizardControl extends Composite implements EventListener
+class WizardControl extends Composite implements WorldEventListener
 {
   static
   {
@@ -124,7 +124,7 @@ class WizardControl extends Composite implements EventListener
   }
   
   @Override
-  public void processEvent(EventObject event)
+  public void processEvent(WorldEvent event)
   {
     eventBus.post(event);
   }

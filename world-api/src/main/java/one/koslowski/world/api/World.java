@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.EventObject;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -33,7 +32,7 @@ public abstract class World implements Serializable
   
   // +++ Steuerung +++ //
   
-  private transient List<EventListener> listeners;
+  private transient List<WorldEventListener> listeners;
   
   private Map<Class<?>, WorldContext<?>> contexts;
   
@@ -119,12 +118,12 @@ public abstract class World implements Serializable
     return entityManager;
   }
   
-  public void addListener(EventListener l)
+  public void addListener(WorldEventListener l)
   {
     listeners.add(l);
   }
   
-  public void removeListener(EventListener l)
+  public void removeListener(WorldEventListener l)
   {
     listeners.remove(l);
   }
@@ -204,18 +203,13 @@ public abstract class World implements Serializable
   {
     event.world = this;
     
-    publishEvent((EventObject) event);
-  }
-  
-  final void publishEvent(EventObject event)
-  {
     if (event instanceof ExceptionEvent)
     {
       exceptionHandler.trap((ExceptionEvent) event);
     }
     else
     {
-      for (EventListener l : listeners)
+      for (WorldEventListener l : listeners)
       {
         l.processEvent(event);
       }
@@ -297,7 +291,7 @@ public abstract class World implements Serializable
    * 
    * @param fork
    *          Fork-Methode (ohne Rückgabewert)
-   *          
+   * 
    * @return Fork-Task
    */
   protected static Future<?> fork(Runnable fork)
@@ -310,7 +304,7 @@ public abstract class World implements Serializable
    * 
    * @param fork
    *          Fork-Methode (mit Rückgabewert)
-   *          
+   * 
    * @return Fork-Task
    */
   protected static <V> Future<V> fork(Callable<V> fork)
@@ -330,9 +324,9 @@ public abstract class World implements Serializable
    * 
    * @param future
    *          Fork-Task (Rückgabewert von fork())
-   *          
+   * 
    * @return Ergebnis des Fork-Tasks
-   *         
+   * 
    * @throws InterruptedException
    *           unterbrochen, beim Warten auf den Fork-Task
    * @throws RuntimeException

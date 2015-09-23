@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.EventObject;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.CoolBarManager;
@@ -28,10 +27,11 @@ import com.google.common.eventbus.Subscribe;
 
 import one.koslowski.connect4.api.Connect4World;
 import one.koslowski.wizard.api.WizardWorld;
-import one.koslowski.world.api.EventListener;
 import one.koslowski.world.api.FrameDelimiter;
 import one.koslowski.world.api.World;
 import one.koslowski.world.api.World.WorldState;
+import one.koslowski.world.api.WorldEvent;
+import one.koslowski.world.api.WorldEventListener;
 import one.koslowski.world.api.WorldManager;
 import one.koslowski.world.api.event.WorldStateEvent;
 import one.koslowski.worlds.WorldKit;
@@ -41,8 +41,8 @@ import one.koslowski.worlds.ui.wizard.WizardController;
 
 public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
 {
-  WorldController controller;
-  EventListener   listener;
+  WorldController    controller;
+  WorldEventListener listener;
   
   // +++ Controls +++ //
   
@@ -301,7 +301,7 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     return super.close();
   }
   
-  private class WorldListener implements EventListener
+  private class WorldListener implements WorldEventListener
   {
     private EventBus bus = new EventBus();
     
@@ -311,7 +311,7 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     }
     
     @Override
-    public void processEvent(EventObject event)
+    public void processEvent(WorldEvent event)
     {
       bus.post(event);
     }
@@ -388,8 +388,8 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
       if (!fileDialog.getFileName().isEmpty())
       {
         File file = new File(fileDialog.getFilterPath() + "/"
-                + fileDialog.getFileName());
-                
+            + fileDialog.getFileName());
+            
         try (FileInputStream input = new FileInputStream(file))
         {
           World world = WorldManager.read(input);
@@ -510,8 +510,8 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
       if (!fileDialog.getFileName().isEmpty())
       {
         File file = new File(fileDialog.getFilterPath() + "/"
-                + fileDialog.getFileName());
-                
+            + fileDialog.getFileName());
+            
         try (FileOutputStream output = new FileOutputStream(file))
         {
           WorldManager.write(controller.getWorld(), output);
@@ -706,18 +706,13 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
       super("Eigenschaften", SWT.NONE);
       
       setAccelerator(SWT.ALT | SWT.CR);
-      setEnabled(controller.getWorld().getFrameDelimiter() != null);
+      setEnabled(false);
     }
     
     @Override
     public void run()
     {
-      WorldManager.sync(controller.getWorld(), () ->
-      {
-        FrameDelimiter d = controller.getWorld().getFrameDelimiter();
-        
-        d.setFPS(d.getFPS() / 2);
-      });
+    
     }
   }
   

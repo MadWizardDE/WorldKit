@@ -2,7 +2,7 @@ package one.koslowski.world.api.event;
 
 import one.koslowski.world.api.World;
 
-public class WorldRemovedEvent extends WorldControlEvent
+public class WorldRemovedEvent extends WorldManagementEvent
 {
   private static final long serialVersionUID = 1L;
   

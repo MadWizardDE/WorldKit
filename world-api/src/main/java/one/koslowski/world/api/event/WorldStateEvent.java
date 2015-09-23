@@ -1,10 +1,9 @@
 package one.koslowski.world.api.event;
 
-import one.koslowski.world.api.SystemEvent;
 import one.koslowski.world.api.World;
 import one.koslowski.world.api.World.WorldState;
 
-public class WorldStateEvent extends SystemEvent
+public class WorldStateEvent extends WorldManagementEvent
 {
   private static final long serialVersionUID = 1L;
   
@@ -16,7 +15,7 @@ public class WorldStateEvent extends SystemEvent
   @Override
   public World getSource()
   {
-    return (World) super.getSource();
+    return super.getSource();
   }
   
   public WorldState getState()

@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.util.EventObject;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,17 +22,18 @@ import java.util.concurrent.TimeUnit;
 
 import one.koslowski.world.api.World.WorldState;
 import one.koslowski.world.api.event.WorldAddedEvent;
+import one.koslowski.world.api.event.WorldManagementEvent;
 import one.koslowski.world.api.event.WorldRemovedEvent;
 import one.koslowski.world.api.event.WorldStoppedEvent;
 import one.koslowski.world.api.event.WorldSuspendedEvent;
 
-public class WorldManager implements EventListener
+public class WorldManager implements WorldEventListener
 {
   static final ThreadLocal<WorldTask<?>> TASK = new ThreadLocal<>();
   
   private WorldExecuter executor;
   
-  private List<EventListener> listeners;
+  private List<WorldEventListener> listeners;
   
   private Map<World, Queue<WorldTask<?>>> worlds;
   
@@ -53,25 +53,25 @@ public class WorldManager implements EventListener
     return TASK.get();
   }
   
-  public void addListener(EventListener l)
+  public void addListener(WorldEventListener l)
   {
     listeners.add(l);
   }
   
-  public void removeListener(EventListener l)
+  public void removeListener(WorldEventListener l)
   {
     listeners.remove(l);
   }
   
   @Override
-  public void processEvent(EventObject event)
+  public void processEvent(WorldEvent event)
   {
     // TODO Event-Debugging
     String eventName = event.getClass().getSimpleName();
     String sourceName = event.getSource().getClass().getSimpleName();
     System.out.println(eventName + " @ " + sourceName);
     
-    if (event instanceof SystemEvent)
+    if (event instanceof WorldManagementEvent)
     {
       if (event instanceof WorldSuspendedEvent)
       {
@@ -80,7 +80,7 @@ public class WorldManager implements EventListener
         executor.cancel(world);
       }
       
-      publishEvent(event);
+      publishEvent((WorldManagementEvent) event);
     }
   }
   
@@ -167,9 +167,9 @@ public class WorldManager implements EventListener
     tasks.offer(task);
   }
   
-  void publishEvent(EventObject event)
+  void publishEvent(WorldManagementEvent event)
   {
-    for (EventListener l : listeners)
+    for (WorldEventListener l : listeners)
     {
       l.processEvent(event);
     }

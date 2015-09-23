@@ -4,13 +4,17 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
+import org.apache.commons.math3.fraction.Fraction;
+
 public class Test
 {
   // private static final int COUNT = 2000000;
   
   public static void main(String[] args)
   {
-    new Test();
+    new Fraction(1.5495495495495495495495495495495).doubleValue();
+    
+    // new Test();
   }
   
   public Test()

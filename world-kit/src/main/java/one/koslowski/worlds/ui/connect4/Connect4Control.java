@@ -1,7 +1,5 @@
 package one.koslowski.worlds.ui.connect4;
 
-import java.util.EventObject;
-
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MouseEvent;
@@ -22,11 +20,12 @@ import one.koslowski.connect4.api.Connect4World;
 import one.koslowski.connect4.api.UndoMoveException;
 import one.koslowski.connect4.api.events.GameOverEvent;
 import one.koslowski.connect4.api.events.MoveEvent;
-import one.koslowski.world.api.EventListener;
+import one.koslowski.world.api.WorldEventListener;
 import one.koslowski.world.api.WaitException;
+import one.koslowski.world.api.WorldEvent;
 import one.koslowski.worlds.WorldKit;
 
-class Connect4Control extends Canvas implements EventListener, PaintListener
+class Connect4Control extends Canvas implements WorldEventListener, PaintListener
 {
   private static final double CHIP_PADDING = 0.1;
   
@@ -83,7 +82,7 @@ class Connect4Control extends Canvas implements EventListener, PaintListener
   }
   
   @Override
-  public void processEvent(EventObject event)
+  public void processEvent(WorldEvent event)
   {
     eventBus.post(event);
   }

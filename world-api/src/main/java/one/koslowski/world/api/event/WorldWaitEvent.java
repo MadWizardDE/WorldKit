@@ -1,24 +1,25 @@
 package one.koslowski.world.api.event;
 
+import one.koslowski.world.api.Entity;
 import one.koslowski.world.api.World;
 
 public class WorldWaitEvent extends WorldStateEvent
 {
   private static final long serialVersionUID = 1L;
   
-  private Object object;
+  private Entity enttiy;
   
   public boolean wait = true;
   
-  public WorldWaitEvent(World source, Object object)
+  public WorldWaitEvent(World source, Entity entity)
   {
     super(source);
     
-    this.object = object;
+    this.enttiy = entity;
   }
   
-  public Object getObject()
+  public Entity getEntity()
   {
-    return object;
+    return enttiy;
   }
 }
