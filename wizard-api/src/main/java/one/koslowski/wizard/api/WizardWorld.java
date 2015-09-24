@@ -6,7 +6,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import one.koslowski.wizard.api.WizardPlayer.WizardPlayerStrategy;
 import one.koslowski.wizard.api.events.CardDrawnEvent;
 import one.koslowski.wizard.api.events.CardPlayedEvent;
-import one.koslowski.wizard.api.events.DeckShuffeledEvent;
 import one.koslowski.wizard.api.events.GameOverEvent;
 import one.koslowski.wizard.api.events.GameStartedEvent;
 import one.koslowski.wizard.api.events.PlayerCheatedEvent;
@@ -116,8 +115,6 @@ public class WizardWorld extends World
     
     // Karten mischen
     deck.shuffle();
-    
-    publishEvent(new DeckShuffeledEvent(deck));
     
     return this::dealCards;
   }

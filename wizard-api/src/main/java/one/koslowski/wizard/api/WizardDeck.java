@@ -9,6 +9,7 @@ import java.util.Stack;
 import org.apache.commons.collections4.CollectionUtils;
 
 import one.koslowski.wizard.api.WizardCard.Color;
+import one.koslowski.wizard.api.events.DeckShuffeledEvent;
 import one.koslowski.world.api.Entity;
 
 public class WizardDeck extends Entity
@@ -65,14 +66,14 @@ public class WizardDeck extends Entity
   {
     Collections.shuffle(stack);
     
-    // WizardWorld.getContext().publishEvent(new )
-    
     shuffled = true;
+    
+    publishEvent(new DeckShuffeledEvent(this));
   }
   
   /**
    * @return die oberste Karte vom Stapel
-   *         
+   * 
    * @throws IllegalStateException
    *           Karten sind nicht gemischt
    * @throws EmptyStackException

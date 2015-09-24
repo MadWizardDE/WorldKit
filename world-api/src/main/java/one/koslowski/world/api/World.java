@@ -128,12 +128,12 @@ public abstract class World implements Serializable
     listeners.remove(l);
   }
   
-  public boolean isWaiting(Object object)
+  public boolean isWaiting(Entity object)
   {
     return wait == object;
   }
   
-  public void notify(Object object)
+  public void notify(Entity object)
   {
     if (object == null)
       throw new IllegalArgumentException();

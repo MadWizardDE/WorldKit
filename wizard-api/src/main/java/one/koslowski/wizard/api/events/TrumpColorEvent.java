@@ -1,6 +1,7 @@
 package one.koslowski.wizard.api.events;
 
 import one.koslowski.wizard.api.WizardCard;
+import one.koslowski.wizard.api.WizardPlayer;
 import one.koslowski.world.api.WorldEvent;
 
 /**
@@ -20,12 +21,11 @@ public class TrumpColorEvent extends WorldEvent
   }
   
   /**
-   * @return Spieler, der die Trumpf-Farbe bestimmt hat (WizardWorld = automatisch)
+   * @return Spieler, der die Trumpf-Farbe bestimmt hat (null = automatisch)
    */
-  @Override
-  public Object getSource()
+  public WizardPlayer getPlayer()
   {
-    return super.getSource();
+    return source instanceof WizardPlayer ? (WizardPlayer) source : null;
   }
   
   /**
