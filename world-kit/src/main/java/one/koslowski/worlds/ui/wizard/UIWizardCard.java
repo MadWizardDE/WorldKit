@@ -17,18 +17,18 @@ import one.koslowski.worlds.WorldType;
 class UIWizardCard extends Canvas implements PaintListener
 {
   WizardCard card;
-  
+
   Color highlightColor;
-  
+
   boolean hidden;
-  
+
   public UIWizardCard(Composite parent, WizardCard card)
   {
     super(parent, SWT.DOUBLE_BUFFERED);
-    
+
     this.card = card;
   }
-  
+
   @Override
   public Point computeSize(int wHint, int hHint, boolean changed)
   {
@@ -39,21 +39,21 @@ class UIWizardCard extends Canvas implements PaintListener
       size.y = (int) (size.x * (3.0 / 2.0));
     return size;
   }
-  
+
   @Override
   public void paintControl(PaintEvent e)
   {
     Image image = getImage();
-    
+
     e.gc.setAntialias(SWT.ON);
     e.gc.setInterpolation(SWT.HIGH);
-    
+
     e.gc.drawImage(image,
         // Quelle
         0, 0, image.getBounds().width, image.getBounds().height,
         // Ziel
         e.x, e.y, e.width, e.height);
-        
+
     if (highlightColor != null)
     {
       e.gc.setLineWidth(e.height / 35);
@@ -61,7 +61,7 @@ class UIWizardCard extends Canvas implements PaintListener
       e.gc.drawRoundRectangle(e.x, e.y, e.width, e.height, e.width / 5, e.height / 5);
     }
   }
-  
+
   String getShorthand()
   {
     if (card.isFool())
@@ -70,17 +70,17 @@ class UIWizardCard extends Canvas implements PaintListener
       return "Z" + card.getNr();
     return card.getColor().name().substring(0, 1) + card.getValue().toString();
   }
-  
+
   private Image getImage()
   {
     return WorldKit.UI.getImage(WorldType.WIZARD, "CARD_" + (hidden ? "X0" : getShorthand()));
   }
-  
+
   static Color getColor(WizardCard.Color color)
   {
     if (color == null)
       return null;
-      
+
     switch (color)
     {
       case BLUE:

@@ -10,12 +10,12 @@ import one.koslowski.wizard.api.WizardTrick;
 public class CardPlayedEvent extends CardEvent
 {
   private static final long serialVersionUID = 1L;
-  
+
   public CardPlayedEvent(WizardPlayer player, WizardTrick trick, WizardCard card)
   {
     super(player, trick, card);
   }
-  
+
   /**
    * @return Spieler, der die Karte gespielt hat
    */
@@ -24,7 +24,7 @@ public class CardPlayedEvent extends CardEvent
   {
     return (WizardPlayer) super.getSource();
   }
-  
+
   /**
    * @return der aktuelle Stich
    */
@@ -33,5 +33,5 @@ public class CardPlayedEvent extends CardEvent
   {
     return (WizardTrick) super.getTarget();
   }
-  
+
 }

@@ -12,12 +12,12 @@ public interface WorldController
    * @return muss stets dieselbe Welt zurückliefern
    */
   public World getWorld();
-  
+
   /**
    * Ein Control zur Darstellung der Welt erzeugen.
    */
   public Control createContents(Composite parent, MenuManager menuBar);
-  
+
   /**
    * Das Control zur Darstellung der Welt entsorgen.
    */

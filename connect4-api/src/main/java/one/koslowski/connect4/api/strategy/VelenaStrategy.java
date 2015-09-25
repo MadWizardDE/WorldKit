@@ -17,20 +17,20 @@ import one.koslowski.connect4.api.events.MoveEvent;
 public class VelenaStrategy implements Connect4PlayerStrategy
 {
   private Difficulty difficulty;
-  
+
   /** "Gedächtnis" - alle (bisherigen) Züge als Zahlenfolge von 1-7 */
   private String moveCode;
-  
+
   public VelenaStrategy(Difficulty difficulty)
   {
     this.difficulty = difficulty;
   }
-  
+
   @Subscribe
   public void onStart(GameStartedEvent event)
   {
     Connect4Board board = Connect4World.getContext().getBoard();
-    
+
     // Velena funktioniert nur bei 2 Spielern ...
     if (getContext().getEntities(Connect4Player.class).size() != 2)
       throw new IllegalStateException("players != 2");
@@ -41,10 +41,10 @@ public class VelenaStrategy implements Connect4PlayerStrategy
     // ... und genau 4 Sieg-Chips
     if (Connect4World.getContext().getWin() != 4)
       throw new IllegalStateException("win != 4");
-      
+
     moveCode = new String();
   }
-  
+
   @Subscribe
   public void onMove(MoveEvent move)
   {
@@ -54,16 +54,16 @@ public class VelenaStrategy implements Connect4PlayerStrategy
       else
         moveCode = moveCode.substring(0, moveCode.length() - 1);
   }
-  
+
   @Override
   public native int move();
-  
+
   public enum Difficulty
   {
     WEAK('a'), NORMAL('b'), STRONG('c');
-    
+
     public final char id;
-    
+
     private Difficulty(char id)
     {
       this.id = id;

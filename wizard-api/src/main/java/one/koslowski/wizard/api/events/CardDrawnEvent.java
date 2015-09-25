@@ -10,12 +10,12 @@ import one.koslowski.wizard.api.WizardPlayer;
 public class CardDrawnEvent extends CardEvent
 {
   private static final long serialVersionUID = 1L;
-  
+
   public CardDrawnEvent(WizardDeck deck, WizardPlayer player, WizardCard card)
   {
     super(deck, player, card);
   }
-  
+
   /**
    * @return Deck, von dem die Karte gezogen wurde
    */
@@ -24,7 +24,7 @@ public class CardDrawnEvent extends CardEvent
   {
     return (WizardDeck) super.getSource();
   }
-  
+
   /**
    * @return Spieler, der die Karte gezogen hat (null = Trumpf-Karte)
    */
@@ -33,5 +33,5 @@ public class CardDrawnEvent extends CardEvent
   {
     return (WizardPlayer) super.getTarget();
   }
-  
+
 }

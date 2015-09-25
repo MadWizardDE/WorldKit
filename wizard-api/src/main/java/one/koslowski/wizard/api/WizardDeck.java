@@ -15,17 +15,17 @@ import one.koslowski.world.api.Entity;
 public class WizardDeck extends Entity
 {
   private static final long serialVersionUID = 1L;
-  
+
   public static final int SIZE = 60;
-  
+
   private Stack<WizardCard> stack;
-  
+
   private boolean shuffled;
-  
+
   {
     stack = new Stack<>();
   }
-  
+
   /**
    * Erzeugt ein Standard-Deck.
    */
@@ -35,7 +35,7 @@ public class WizardDeck extends Entity
     for (Color color : Color.values())
       for (int value = WizardCard.LOW_VALUE; value <= WizardCard.HIGH_VALUE; value++)
         stack.add(new WizardCard(color, value));
-        
+
     // Sonderkarten (Narren und Zauberer)
     for (int nr = 1; nr <= 4; nr++)
     {
@@ -43,34 +43,34 @@ public class WizardDeck extends Entity
       stack.add(new WizardCard(WizardCard.MAX_VALUE, nr));
     }
   }
-  
+
   List<WizardCard> getCards()
   {
     return stack;
   }
-  
+
   public int getSize()
   {
     return stack.size();
   }
-  
+
   public boolean isEmpty()
   {
     return stack.isEmpty();
   }
-  
+
   /**
    * Karten mischen.
    */
   public void shuffle()
   {
     Collections.shuffle(stack);
-    
+
     shuffled = true;
-    
+
     publishEvent(new DeckShuffeledEvent(this));
   }
-  
+
   /**
    * @return die oberste Karte vom Stapel
    * 
@@ -83,26 +83,26 @@ public class WizardDeck extends Entity
   {
     if (!shuffled)
       throw new IllegalStateException();
-      
+
     return stack.pop();
   }
-  
+
   public void collect(WizardCard card)
   {
     if (card != null)
     {
       stack.push(card);
-      
+
       shuffled = false;
     }
   }
-  
+
   public void collect(Collection<WizardCard> cards)
   {
     if (!CollectionUtils.isEmpty(cards))
     {
       stack.addAll(cards);
-      
+
       shuffled = false;
     }
   }

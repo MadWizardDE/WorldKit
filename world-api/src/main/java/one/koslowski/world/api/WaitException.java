@@ -6,9 +6,9 @@ package one.koslowski.world.api;
 public class WaitException extends InterruptedException
 {
   private static final long serialVersionUID = 1L;
-  
+
   Entity entity;
-  
+
   /**
    * @param object
    *          Objekt, auf das gewartet werden muss

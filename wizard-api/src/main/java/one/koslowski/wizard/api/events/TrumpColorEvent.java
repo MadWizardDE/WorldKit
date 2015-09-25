@@ -10,16 +10,16 @@ import one.koslowski.world.api.WorldEvent;
 public class TrumpColorEvent extends WorldEvent
 {
   private static final long serialVersionUID = 1L;
-  
+
   private WizardCard.Color color;
-  
+
   public TrumpColorEvent(Object source, WizardCard.Color color)
   {
     super(source);
-    
+
     this.color = color;
   }
-  
+
   /**
    * @return Spieler, der die Trumpf-Farbe bestimmt hat (null = automatisch)
    */
@@ -27,7 +27,7 @@ public class TrumpColorEvent extends WorldEvent
   {
     return source instanceof WizardPlayer ? (WizardPlayer) source : null;
   }
-  
+
   /**
    * @return Trumpf-Farbe für diese Runde (null = kein Trumpf)
    */
@@ -35,5 +35,5 @@ public class TrumpColorEvent extends WorldEvent
   {
     return color;
   }
-  
+
 }

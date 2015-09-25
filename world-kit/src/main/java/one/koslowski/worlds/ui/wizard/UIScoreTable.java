@@ -25,51 +25,51 @@ import one.koslowski.worlds.WorldKit;
 class UIScoreTable extends Window
 {
   private ScoreTable scores;
-  
+
   private TableViewer tableViewer;
-  
+
   public UIScoreTable(Shell parent, ScoreTable scores)
   {
     super(parent);
-    
+
     this.scores = scores;
-    
+
     setShellStyle(SWT.CLOSE | SWT.TITLE | SWT.TOOL);
   }
-  
+
   @Override
   protected void configureShell(Shell shell)
   {
     super.configureShell(shell);
-    
+
     shell.setText("Der Block der Wahrheit");
     shell.setAlpha((int) (255.0 / 1.0625));
   }
-  
+
   @Override
   protected Control createContents(Composite parent)
   {
     parent.setLayout(new FillLayout());
-    
+
     Table table = new Table(parent, SWT.V_SCROLL | SWT.BORDER);
     table.setHeaderVisible(true);
     table.setLinesVisible(true);
-    
+
     tableViewer = new TableViewer(table);
     createColumns(tableViewer);
     tableViewer.setContentProvider(new ArrayContentProvider());
-    
+
     Object[] rounds = new Object[scores.getMaxRoundCount()];
     for (int i = 0; i < rounds.length; i++)
       rounds[i] = i + 1;
     tableViewer.setInput(rounds);
-    
+
     table.pack();
     getShell().pack();
-    
+
     return table;
   }
-  
+
   protected void createColumns(TableViewer viewer)
   {
     // Runde
@@ -78,7 +78,7 @@ class UIScoreTable extends Window
       v.getColumn().setText("#");
       v.getColumn().setResizable(false);
       v.getColumn().setWidth(25);
-      
+
       v.setLabelProvider(new ColumnLabelProvider()
       {
         @Override
@@ -88,17 +88,17 @@ class UIScoreTable extends Window
         }
       });
     }
-    
+
     // Spieler
     for (int nr = 1; nr <= scores.getPlayerCount(); nr++)
     {
       WizardPlayer player = scores.getPlayer(nr);
-      
+
       TableViewerColumn v = new TableViewerColumn(tableViewer, SWT.CENTER);
       v.getColumn().setText(player.getName());
       v.getColumn().setResizable(false);
       v.getColumn().setWidth(100);
-      
+
       v.setLabelProvider(new ColumnLabelProvider()
       {
         @Override
@@ -107,7 +107,7 @@ class UIScoreTable extends Window
           if (scores.getRoundCount() >= (Integer) element)
           {
             Round round = scores.getRound((Integer) element).get(player);
-            
+
             if (round != null && round.getScore() != null)
             {
               return round.getScore().toString();
@@ -115,14 +115,14 @@ class UIScoreTable extends Window
           }
           return "";
         }
-        
+
         @Override
         public Color getForeground(Object element)
         {
           if (scores.getRoundCount() >= (Integer) element)
           {
             Round round = scores.getRound((Integer) element).get(player);
-            
+
             if (round != null && round.isWin() != null)
             {
               if (round.isWin())
@@ -136,13 +136,13 @@ class UIScoreTable extends Window
       });
     }
   }
-  
+
   @Subscribe
   public void onShuffle(DeckShuffeledEvent event)
   {
     WorldKit.UI.async(getContents(), () -> tableViewer.refresh());
   }
-  
+
   @Subscribe
   public void onGameOver(GameOverEvent event)
   {

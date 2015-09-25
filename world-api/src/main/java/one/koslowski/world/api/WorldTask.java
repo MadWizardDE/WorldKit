@@ -17,48 +17,48 @@ import one.koslowski.world.api.event.WorldWaitEvent;
 class WorldTask<V> extends FutureTask<V>
 {
   World world;
-  
+
   WorldTask<?> parent;
-  
+
   Collection<WorldTask<?>> tasks;
-  
+
   Long delay;
-  
+
   {
     tasks = new LinkedList<>();
   }
-  
+
   public WorldTask(World world, Runnable task)
   {
     this(world, Executors.callable(task, null));
   }
-  
+
   public WorldTask(World world, Callable<V> task)
   {
     super(task);
-    
+
     this.world = world;
   }
-  
+
   public WorldTask(WorldTask<?> worldTask, Callable<V> task)
   {
     this(worldTask.getWorld(), task);
-    
+
     // Parent->Child Beziehung herstellen
     (this.parent = worldTask).tasks.add(this);
   }
-  
+
   public World getWorld()
   {
     return world;
   }
-  
+
   V await() throws InterruptedException
   {
     try
     {
       awaitTasks();
-      
+
       return this.get();
     }
     catch (CancellationException e)
@@ -74,40 +74,40 @@ class WorldTask<V> extends FutureTask<V>
       return null; // impossibruuuuuu
     }
   }
-  
+
   void awaitTasks() throws InterruptedException
   {
     for (WorldTask<?> task : tasks)
       task.await();
   }
-  
+
   void interrupt()
   {
     for (WorldTask<?> task : tasks)
       task.cancel(true);
-      
+
     this.cancel(true);
   }
-  
+
   V invoke() throws InterruptedException
   {
     run();
-    
+
     return await();
   }
-  
+
   @Override
   public void run()
   {
     WorldManager.TASK.set(this);
-    
+
     try
     {
       if (world != null && parent == null)
         synchronized (world)
         {
           world.task = this; // Highlander
-          
+
           try
           {
             super.run();
@@ -119,9 +119,9 @@ class WorldTask<V> extends FutureTask<V>
         }
       else
         super.run();
-        
+
       await(); // FAILSAVE: auf nicht-gejointe Tasks warten
-      
+
       if (Thread.interrupted())
       {
         throw new InterruptedException();
@@ -130,7 +130,7 @@ class WorldTask<V> extends FutureTask<V>
     catch (ThrottleException e)
     {
       world.state = WorldState.THROTTLING;
-      
+
       delay = e.time;
     }
     catch (InterruptedException e)
@@ -140,9 +140,9 @@ class WorldTask<V> extends FutureTask<V>
         if (world.wait != null)
         {
           WorldWaitEvent event = new WorldWaitEvent(world, world.wait);
-          
+
           world.publishEvent(event);
-          
+
           if (event.wait)
             world.state = WorldState.WAITING;
           else
@@ -151,7 +151,7 @@ class WorldTask<V> extends FutureTask<V>
         else if (world.state == WorldState.EXECUTING)
         {
           world.state = WorldState.INTERRUPTED;
-          
+
           world.publishEvent(new WorldSuspendedEvent(world));
         }
       }

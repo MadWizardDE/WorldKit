@@ -9,12 +9,12 @@ import one.koslowski.world.api.EntityEvent;
 public class DeckShuffeledEvent extends EntityEvent
 {
   private static final long serialVersionUID = 1L;
-  
+
   public DeckShuffeledEvent(WizardDeck source)
   {
     super(source);
   }
-  
+
   public WizardDeck getDeck()
   {
     return (WizardDeck) source;

@@ -13,14 +13,14 @@ import java.util.EventObject;
 public class WorldEvent extends EventObject
 {
   private static final long serialVersionUID = 1L;
-  
+
   World world;
-  
+
   public WorldEvent(Object source)
   {
     super(source);
   }
-  
+
   /**
    * @return die Welt, in der das Event stattgefunden hat
    */
@@ -28,12 +28,12 @@ public class WorldEvent extends EventObject
   {
     return world;
   }
-  
+
   @Inherited
   @Target(ElementType.METHOD)
   @Retention(RetentionPolicy.RUNTIME)
   public @interface EventHandler
   {
-  
+
   }
 }

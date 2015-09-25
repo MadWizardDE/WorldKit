@@ -6,17 +6,17 @@ package one.koslowski.connect4.api;
 public class UndoMoveException extends Exception
 {
   private static final long serialVersionUID = 1L;
-  
+
   /**
    * Spieler, dessen letzter Zug wiederholt werden soll.
    */
   Connect4Player player;
-  
+
   /**
    * Anzahl an Zügen, die wiederholt werden sollen. (0 = kein Effekt)
    */
   Integer count;
-  
+
   /**
    * @param player
    *          {@link #player}
@@ -25,7 +25,7 @@ public class UndoMoveException extends Exception
   {
     this.player = player;
   }
-  
+
   /**
    * @param count
    *          {@link #count}

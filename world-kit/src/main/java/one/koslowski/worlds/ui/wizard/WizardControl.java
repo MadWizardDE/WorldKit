@@ -36,66 +36,66 @@ class WizardControl extends Composite implements WorldEventListener
     {
       // Deckblatt
       loadCardImage(images, "X0");
-      
+
       // Farb-Karten
       for (WizardCard.Color color : WizardCard.Color.values())
         for (int value = WizardCard.LOW_VALUE; value <= WizardCard.HIGH_VALUE; value++)
           loadCardImage(images, color.name().substring(0, 1) + value);
-          
+
       // Sonderkarten
       for (int nr = 1; nr <= 4; nr++)
       {
         loadCardImage(images, "N" + nr);
         loadCardImage(images, "Z" + nr);
       }
-      
+
       // Dealer
       images.put("DEALER", ImageDescriptor.createFromFile(WizardControl.class, "dealer.png"));
     }
-    
+
     FontRegistry fonts = WorldKit.UI.getFontRegistry(WorldType.WIZARD);
     {
       // Anzahl Stapel-Karten
       fonts.put("DECK_SIZE", fonts.defaultFontDescriptor().setHeight(20).getFontData());
     }
   }
-  
+
   private static void loadCardImage(ImageRegistry registry, String name)
   {
     registry.put("CARD_" + name, ImageDescriptor.createFromFile(WizardControl.class, "cards/" + name + ".png"));
   }
-  
+
   EventBus eventBus;
-  
+
   // +++ UI +++ //
   private Composite            cards;
   private UIWizardDeck         deck;
   private UIWizardCard         trumpCard;
   private List<UIWizardPlayer> players;
-  
+
   UIScoreTable scoreWindow;
-  
+
   {
     players = new ArrayList<>();
   }
-  
+
   public WizardControl(Composite parent, MenuManager menu, WizardWorld world)
   {
     super(parent, SWT.DOUBLE_BUFFERED);
-    
+
     eventBus = new EventBus();
     eventBus.register(this);
-    
+
     WizardContext context = WizardWorld.getContext();
-    
+
     cards = new Composite(this, SWT.DOUBLE_BUFFERED);
     {
       cards.setLayout(new CardsLayout());
-      
+
       // Kartenstapel
       deck = new UIWizardDeck(cards, context.getDeck());
       eventBus.register(deck);
-      
+
       // Trumpf-Karte
       if (context.getTrumpCard() != null)
       {
@@ -104,7 +104,7 @@ class WizardControl extends Composite implements WorldEventListener
         trumpCard.addPaintListener(trumpCard);
       }
     }
-    
+
     for (WizardPlayer player : context.getPlayers())
     {
       // Spieler (inkl. Stich- und Handkarten)
@@ -112,23 +112,23 @@ class WizardControl extends Composite implements WorldEventListener
       eventBus.register(ui);
       players.add(ui);
     }
-    
+
     FillLayout layout = new FillLayout(SWT.VERTICAL);
     layout.spacing = 5;
     layout.marginHeight = 5;
     layout.marginWidth = 10;
     this.setLayout(layout);
-    
+
     layout();
     redraw();
   }
-  
+
   @Override
   public void processEvent(WorldEvent event)
   {
     eventBus.post(event);
   }
-  
+
   @Subscribe
   public void onShuffle(DeckShuffeledEvent event)
   {
@@ -141,7 +141,7 @@ class WizardControl extends Composite implements WorldEventListener
       });
     }
   }
-  
+
   @Subscribe
   public void onDraw(CardDrawnEvent event)
   {
@@ -155,12 +155,12 @@ class WizardControl extends Composite implements WorldEventListener
       });
     }
   }
-  
+
   @Subscribe
   public void onTrumpColor(TrumpColorEvent event)
   {
     WizardCard card = WizardWorld.getContext().getTrumpCard();
-    
+
     if (card != null)
     {
       WorldKit.UI.async(cards, () ->
@@ -170,7 +170,7 @@ class WizardControl extends Composite implements WorldEventListener
       });
     }
   }
-  
+
   private class CardsLayout extends Layout
   {
     @Override
@@ -178,17 +178,17 @@ class WizardControl extends Composite implements WorldEventListener
     {
       return new Point(wHint, hHint);
     }
-    
+
     @Override
     protected void layout(Composite composite, boolean flushCache)
     {
       if (composite == cards)
       {
         Point size = deck.computeSize(SWT.DEFAULT, cards.getSize().y);
-        
+
         deck.setLocation(0, 0);
         deck.setSize(size);
-        
+
         if (trumpCard != null)
         {
           trumpCard.setLocation(size.x + 10, 0);

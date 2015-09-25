@@ -12,27 +12,27 @@ import one.koslowski.world.api.Entity;
 public class WizardTrick extends Entity
 {
   private static final long serialVersionUID = 1L;
-  
+
   /** Diese Farbe ist Trumpf. */
   private WizardCard.Color trumps;
   /** Diese Farbe muss bedient werden. */
   private WizardCard.Color suits;
-  
+
   /** Die bisher gespielten Karten. */
   private Map<WizardPlayer, WizardCard> cards;
-  
+
   /** Diesem Spieler gehört bisher der Stich. */
   private WizardPlayer player;
-  
+
   {
     cards = new LinkedHashMap<>();
   }
-  
+
   WizardTrick(WizardCard.Color trumpColor)
   {
     this.trumps = trumpColor;
   }
-  
+
   /**
    * @return {@link #trumps}
    */
@@ -40,7 +40,7 @@ public class WizardTrick extends Entity
   {
     return trumps;
   }
-  
+
   /**
    * @return {@link #suits}
    */
@@ -48,7 +48,7 @@ public class WizardTrick extends Entity
   {
     return suits;
   }
-  
+
   /**
    * @return {@link #cards}
    */
@@ -61,7 +61,7 @@ public class WizardTrick extends Entity
       {
         return CollectionUtils.get(cards.values(), index);
       }
-      
+
       @Override
       public int size()
       {
@@ -69,12 +69,12 @@ public class WizardTrick extends Entity
       }
     };
   }
-  
+
   public WizardCard getCard(WizardPlayer player)
   {
     return cards.get(player);
   }
-  
+
   /**
    * @return {@link #player}
    */
@@ -82,7 +82,7 @@ public class WizardTrick extends Entity
   {
     return player;
   }
-  
+
   /**
    * @return muss der Spieler mit einer anderen Karte bedienen?
    */
@@ -93,10 +93,10 @@ public class WizardTrick extends Entity
         for (WizardCard playerCard : player.getCards())
           if (playerCard.getColor() == suits)
             return true;
-            
+
     return false;
   }
-  
+
   /**
    * @throws IllegalMoveException
    *           Spieler hat nicht bedient (obwohl er müsste)
@@ -105,13 +105,13 @@ public class WizardTrick extends Entity
   {
     if (isReneging(player, card))
       throw new IllegalMoveException();
-      
+
     this.cards.put(player, card); // OK
-    
+
     if (this.player == null)
     {
       this.player = player;
-      
+
       suits = card.getColor();
     }
     else
@@ -122,10 +122,10 @@ public class WizardTrick extends Entity
         // Karte mit höherem Wert gewinnt
         WizardCard playerCard = cards.get(this.player);
         if (card.getColor() == trumps && playerCard.getColor() != trumps && playerCard.getColor() != null
-                || card.getValue() > playerCard.getValue())
+            || card.getValue() > playerCard.getValue())
         {
           this.player = player;
-          
+
           if (suits == null)
           {
             suits = card.getColor(); // ab jetzt muss bedient werden

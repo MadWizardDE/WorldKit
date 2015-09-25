@@ -16,43 +16,43 @@ import one.koslowski.world.api.EntityInvocationHandler;
 public class StaticInvocationHandler extends EntityInvocationHandler
 {
   private Map<Entity, List<EntityInvocationStrategy<?>>> strategies;
-  
+
   {
     strategies = new HashMap<>();
   }
-  
+
   public StaticInvocationHandler()
   {
-  
+
   }
-  
+
   public <E extends Entity, T extends EntityInvocationStrategy<E>> void register(E entity, T strategy)
   {
     List<EntityInvocationStrategy<?>> strategies = this.strategies.get(entity);
-    
+
     if (strategies == null)
     {
       this.strategies.put(entity, strategies = new ArrayList<>());
     }
-    
+
     strategies.add(strategy);
   }
-  
+
   public <E extends Entity, T extends EntityInvocationStrategy<E>> void unregister(E entity, T strategy)
   {
     List<EntityInvocationStrategy<?>> strategies = this.strategies.get(entity);
-    
+
     if (!CollectionUtils.isEmpty(strategies))
     {
       strategies.remove(strategy);
     }
   }
-  
+
   @Override
   protected Object dispatch(EntityInvocation invocation) throws Throwable
   {
     List<EntityInvocationStrategy<?>> strategies = this.strategies.get(invocation.getEntity());
-    
+
     try
     {
       for (EntityInvocationStrategy<?> strategy : strategies)
@@ -67,7 +67,7 @@ public class StaticInvocationHandler extends EntityInvocationHandler
     {
       throw e.getTargetException();
     }
-    
+
     throw new IllegalStateException("entity invocation failed");
   }
 }

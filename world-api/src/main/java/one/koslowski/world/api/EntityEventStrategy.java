@@ -6,7 +6,7 @@ import one.koslowski.world.api.exception.EntityEventException;
 public abstract class EntityEventStrategy
 {
   protected abstract void processEvent(WorldEvent event);
-  
+
   protected final void handle(Entity entity, WorldEvent event)
   {
     try

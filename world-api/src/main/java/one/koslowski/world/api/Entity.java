@@ -28,85 +28,85 @@ import one.koslowski.world.api.exception.EntityEventException;
 public class Entity implements Serializable
 {
   private static final long serialVersionUID = 1L;
-  
+
   private static ThreadLocal<Entity> ENTITY = new ThreadLocal<>();
-  
+
   transient EntityContext ctx;
   transient EventBus      bus;
-  
+
   /** Dynamisches Verhalten (u.a. für Strategie-Implementierung) */
   public final Object x;
-  
+
   long id;
-  
+
   private Map<String, Serializable> data;
-  
+
   {
     data = new HashMap<String, Serializable>();
   }
-  
+
   protected Entity()
   {
     x = createProxy();
-    
+
     World.getWorld().addEntity(this);
   }
-  
+
   private Object createProxy()
   {
     List<Class<?>> list = new ArrayList<Class<?>>();
-    
+
     // Strategie-Interfaces
     for (Class<?> cls : getClass().getClasses())
       if (cls != EntityInvocationStrategy.class && cls.isInterface())
         if (EntityInvocationStrategy.class.isAssignableFrom(cls))
           list.add(cls);
-          
+
     ClassLoader cl = Thread.currentThread().getContextClassLoader();
-    
+
     return Proxy.newProxyInstance(cl, list.toArray(new Class[list.size()]),
         (InvocationHandler & Serializable) this::handleInvocation);
   }
-  
+
   static Entity getEntity()
   {
     return ENTITY.get();
   }
-  
+
   public long getId()
   {
     return id;
   }
-  
+
   public Serializable getData()
   {
     return this.getData(null);
   }
-  
+
   public Serializable getData(String key)
   {
     return this.data.get(key);
   }
-  
+
   public World getWorld()
   {
     return ctx != null ? ctx.getWorld() : null;
   }
-  
+
   public void setData(Serializable data)
   {
     this.setData(null, data);
   }
-  
+
   public void setData(String key, Serializable data)
   {
     this.data.put(key, data);
   }
-  
+
   protected void handleEvent(WorldEvent event) throws Throwable
   {
     ENTITY.set(this);
-    
+
     try
     {
       bus.post(event);
@@ -116,20 +116,20 @@ public class Entity implements Serializable
       ENTITY.remove();
     }
   }
-  
+
   void handleEventException(Throwable t, SubscriberExceptionContext ctx)
   {
     publishEvent(new EntityExceptionEvent(new EntityEventException(this, (WorldEvent) ctx.getEvent(), t)));
   }
-  
+
   private Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable
   {
     ENTITY.set(Entity.this);
-    
+
     try
     {
       EntityInvocation invocation = new EntityInvocation(Entity.this, method, args);
-      
+
       try
       {
         return invocation.result = ctx.getManager().invoke(invocation);
@@ -148,30 +148,30 @@ public class Entity implements Serializable
       ENTITY.remove();
     }
   }
-  
+
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException
   {
     in.defaultReadObject();
-    
+
     World.getEntityContext().getManager().register(this);
   }
-  
+
   protected final EntityContext getContext()
   {
     if (ctx == null)
       throw new IllegalStateException();
-      
+
     return ctx;
   }
-  
+
   protected final void publishEvent(EntityEvent event)
   {
     if (event.getSource() != this)
       throw new IllegalArgumentException();
-      
+
     ctx.getWorld().publishEvent(event);
   }
-  
+
   protected final Object writeReplace() throws ObjectStreamException
   {
     if (getContext().getManager().fullSerialize)
@@ -179,7 +179,7 @@ public class Entity implements Serializable
     else
       return new EntityReference(this);
   }
-  
+
   @Override
   protected final void finalize() throws Throwable
   {
@@ -189,7 +189,7 @@ public class Entity implements Serializable
       // WorldManager.sync(ctx.getWorld(), new EntitySweeperTask());
     }
   }
-  
+
   /**
    * TODO Metamodel Cache
    * 
@@ -201,45 +201,45 @@ public class Entity implements Serializable
     <T extends Annotation> List<Method> getMethods(Class<T> annotation)
     {
       List<Method> methods = new ArrayList<>();
-      
+
       for (Method method : Entity.this.getClass().getMethods())
       {
         T handler = method.getAnnotation(annotation);
-        
+
         if (handler != null)
         {
           methods.add(method);
         }
       }
-      
+
       return methods;
     }
-    
+
     List<Method> getMethods(Class<?> type, Class<?>... types)
     {
       List<Method> methods = new ArrayList<>();
-      
+
       for (Method method : getMethods())
       {
         if (matches(method, type, types))
           methods.add(method);
       }
-      
+
       return methods;
     }
-    
+
     boolean matches(Method method, Class<?> type, Class<?>... types)
     {
       if (method.getReturnType() != type)
         return false;
-        
+
       if (method.getParameterTypes().length != types.length)
         return false;
-        
+
       for (int i = 0; i < types.length; i++)
         if (method.getParameterTypes()[i] != types[i])
           return false;
-          
+
       // nur Error & RuntimeException zulassen
       for (Class<?> ex : method.getExceptionTypes())
       {
@@ -249,21 +249,21 @@ public class Entity implements Serializable
           continue;
         return false;
       }
-      
+
       return true;
     }
-    
+
     boolean matches(Method method, Class<? extends Annotation> annotation)
     {
       return method.getAnnotation(annotation) != null;
     }
-    
+
     Object invoke(Method method, Object obj, Object... args)
     {
       try
       {
         method.setAccessible(true);
-        
+
         return method.invoke(obj, args);
       }
       catch (InvocationTargetException e)
@@ -279,68 +279,68 @@ public class Entity implements Serializable
         throw new RuntimeException(e);
       }
     }
-    
+
     private Set<Method> getMethods()
     {
       Set<Method> methods = new HashSet<>();
-      
+
       Class<?> type = Entity.this.getClass();
-      
+
       while (type != null)
       {
         methods.addAll(Arrays.asList(type.getDeclaredMethods()));
-        
+
         type = type.getSuperclass();
       }
-      
+
       return methods;
     }
   }
-  
+
   public class EntityContext extends EntityManager.EntityContext
   {
     EntityContext(EntityManager manager)
     {
       manager.super();
     }
-    
+
     @SuppressWarnings("unchecked")
     private <T> T getStrategy(Class<T> strg)
     {
       if (!strg.isInstance(getManager().strategy))
         throw new IllegalStateException();
-        
+
       return (T) getManager().strategy;
     }
-    
+
     public void addListener(Class<? extends WorldEvent> type, Object source)
     {
       getStrategy(EventSourceStrategy.class).addListener(type, source, Entity.this);
     }
-    
+
     public void removeListener(Class<? extends WorldEvent> type, Object source)
     {
       getStrategy(EventSourceStrategy.class).removeListener(type, source, Entity.this);
     }
   }
-  
+
   private static final class EntityReference implements Serializable
   {
     private static final long serialVersionUID = 1L;
-    
+
     private long id;
-    
+
     private EntityReference(Entity entity)
     {
       this.id = entity.id;
     }
-    
+
     private Object readResolve() throws ObjectStreamException
     {
       return World.getEntityContext().getEntityByID(id);
     }
   }
-  
+
   @SuppressWarnings("unchecked")
   public interface EntityInvocationStrategy<E extends Entity>
   {
@@ -348,7 +348,7 @@ public class Entity implements Serializable
     {
       return (E) ENTITY.get();
     }
-    
+
     default EntityContext getContext()
     {
       return getEntity().getContext();

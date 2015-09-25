@@ -10,16 +10,16 @@ import one.koslowski.world.api.WorldEvent;
 public class GameOverEvent extends WorldEvent
 {
   private static final long serialVersionUID = 1L;
-  
+
   private WizardPlayer winner;
-  
+
   public GameOverEvent(WizardWorld source, WizardPlayer winner)
   {
     super(source);
-    
+
     this.winner = winner;
   }
-  
+
   /**
    * @return Sieger (null = unentschieden)
    */
@@ -27,5 +27,5 @@ public class GameOverEvent extends WorldEvent
   {
     return winner;
   }
-  
+
 }

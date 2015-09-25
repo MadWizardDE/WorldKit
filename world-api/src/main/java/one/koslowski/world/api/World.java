@@ -21,131 +21,131 @@ import one.koslowski.world.api.event.WorldSuspendedEvent;
 public abstract class World implements Serializable
 {
   private static final long serialVersionUID = 1L;
-  
+
   // +++ Manager +++ //
-  
+
   transient WorldManager manager;
-  
+
   transient EntityManager entityManager;
-  
+
   transient WorldTask<?> task;
-  
+
   // +++ Steuerung +++ //
-  
+
   private transient List<WorldEventListener> listeners;
-  
+
   private Map<Class<?>, WorldContext<?>> contexts;
-  
+
   private transient ExceptionHandler exceptionHandler;
-  
+
   // +++ Welt-Zustand +++ //
-  
+
   long frame;
-  
+
   volatile WorldState state;
-  
+
   private FrameDelimiter frameDelimiter;
-  
+
   protected Phase phase = null;
-  
+
   volatile Entity wait;
-  
+
   {
     contexts = new ConcurrentHashMap<>();
   }
-  
+
   protected World()
   {
     state = WorldState.FRESH;
-    
+
     initTransient();
   }
-  
+
   static World getWorld()
   {
     WorldTask<?> task = WorldManager.getTask();
-    
+
     if (task == null || task.getWorld() == null)
       throw new IllegalStateException();
-      
+
     return task.getWorld();
   }
-  
+
   protected void initTransient()
   {
     listeners = new CopyOnWriteArrayList<>();
-    
+
     // Entity-Manager einrichten
     addListener(entityManager = new EntityManager(this));
-    
+
     // Default ExceptionHandler
     exceptionHandler = new DefaultExceptionHandler();
   }
-  
+
   protected void addContext(WorldContext<?> ctx)
   {
     contexts.put(ctx.getClass(), ctx);
   }
-  
+
   protected void removeContext(WorldContext<?> ctx)
   {
     contexts.remove(ctx.getClass());
   }
-  
+
   @SuppressWarnings("unchecked")
   protected static <T extends WorldContext<?>> T getContext(Class<T> ctx)
   {
     return (T) getWorld().contexts.get(ctx);
   }
-  
+
   public static EntityContext getEntityContext()
   {
     return getWorld().entityManager.context;
   }
-  
+
   public WorldState getState()
   {
     return state;
   }
-  
+
   public WorldManager getManager()
   {
     return manager;
   }
-  
+
   public EntityManager getEntityManager()
   {
     return entityManager;
   }
-  
+
   public void addListener(WorldEventListener l)
   {
     listeners.add(l);
   }
-  
+
   public void removeListener(WorldEventListener l)
   {
     listeners.remove(l);
   }
-  
+
   public boolean isWaiting(Entity object)
   {
     return wait == object;
   }
-  
+
   public void notify(Entity object)
   {
     if (object == null)
       throw new IllegalArgumentException();
-      
+
     if (isWaiting(object))
     {
       wait = null;
-      
+
       manager.execute(this);
     }
   }
-  
+
   public void interrupt()
   {
     switch (state)
@@ -154,55 +154,55 @@ public abstract class World implements Serializable
         if (task != null)
           task.interrupt();
         break;
-        
+
       case WAITING:
         wait = null;
       case THROTTLING:
         state = WorldState.INTERRUPTED;
-        
+
         publishEvent(new WorldSuspendedEvent(this));
         break;
-        
+
       default:
     }
   }
-  
+
   public FrameDelimiter getFrameDelimiter()
   {
     return frameDelimiter;
   }
-  
+
   public ExceptionHandler getExceptionHandler()
   {
     return exceptionHandler;
   }
-  
+
   public void setFrameDelimiter(FrameDelimiter delimiter)
   {
     this.frameDelimiter = delimiter;
   }
-  
+
   public void setExceptionHandler(ExceptionHandler handler)
   {
     this.exceptionHandler = handler;
   }
-  
+
   protected void addEntity(Entity entity)
   {
     entity.id = ++entityManager.entityID;
-    
+
     entityManager.register(entity);
   }
-  
+
   protected void removeEntity(Entity entity)
   {
     entityManager.unregister(entity);
   }
-  
+
   protected final void publishEvent(WorldEvent event)
   {
     event.world = this;
-    
+
     if (event instanceof ExceptionEvent)
     {
       exceptionHandler.trap((ExceptionEvent) event);
@@ -215,33 +215,33 @@ public abstract class World implements Serializable
       }
     }
   }
-  
+
   /**
    * Die Haupt-Schleife - hier beginnt und endet alles.
    */
   final void loop()
   {
     WorldState state = this.state;
-    
+
     if (phase == null)
       return;
-      
+
     this.state = WorldState.EXECUTING;
-    
+
     if (state == WorldState.FRESH)
       publishEvent(new WorldStartedEvent(this));
     else if (state.isSuspended())
       publishEvent(new WorldResumedEvent(this));
-      
+
     try
     {
       if (frameDelimiter != null)
         frameDelimiter.beforePhase();
-        
+
       phase = phase.get(); // Phase durchführen
-      
+
       frame++;
-      
+
       if (frameDelimiter != null)
         frameDelimiter.afterPhase();
     }
@@ -251,7 +251,7 @@ public abstract class World implements Serializable
       {
         wait = ((WaitException) e).entity;
       }
-      
+
       Thread.currentThread().interrupt();
     }
     catch (Error | RuntimeException e)
@@ -266,26 +266,26 @@ public abstract class World implements Serializable
       }
     }
   }
-  
+
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException
   {
     initTransient();
-    
+
     task = WorldManager.getTask();
     task.world = this;
-    
+
     in.defaultReadObject();
-    
+
     entityManager.entityID = in.readLong();
   }
-  
+
   private void writeObject(ObjectOutputStream out) throws IOException
   {
     out.defaultWriteObject();
-    
+
     out.writeLong(entityManager.entityID);
   }
-  
+
   /**
    * Spaltet eine asynchrone Fork-Task von der Hauptverarbeitung ab.
    * 
@@ -298,7 +298,7 @@ public abstract class World implements Serializable
   {
     return fork(Executors.callable(fork));
   }
-  
+
   /**
    * Spaltet eine asynchrone Fork-Task von der Hauptverarbeitung ab.
    * 
@@ -311,15 +311,15 @@ public abstract class World implements Serializable
   {
     if (WorldManager.getTask() == null)
       throw new IllegalStateException("World unknown");
-      
+
     WorldTask<V> forkTask = new WorldTask<V>(WorldManager.getTask(), fork);
-    
+
     // triviale fork/join logik
     forkTask.world.manager.execute(forkTask);
-    
+
     return forkTask;
   }
-  
+
   /**
    * 
    * @param future
@@ -336,7 +336,7 @@ public abstract class World implements Serializable
   {
     return ((WorldTask<V>) future).await();
   }
-  
+
   /**
    * Wartet auf alle ge-fork()-ten Tasks. Falls Exceptions aufgetreten sind, werden diese ebenfalls
    * aus dieser Methode geworfen, sodass alle Aufrufe gegen Future.get() in O(1) ablaufen und keine
@@ -351,79 +351,79 @@ public abstract class World implements Serializable
   {
     if (WorldManager.getTask() == null)
       throw new IllegalStateException("World unknown");
-      
+
     WorldManager.getTask().awaitTasks();
   }
-  
+
   protected interface Phase extends Serializable
   {
     Phase get() throws InterruptedException;
   }
-  
+
   public enum WorldState
   {
     /** "frische" Welt, bereit zur Ausführung */
     FRESH,
-    
+
     /** Welt wird ausgeführt */
     EXECUTING,
-    
+
     /** Welt wartet auf die verzögerte nächste Ausführung */
     THROTTLING,
-    
+
     /** Welt wartet auf externes Ereignis */
     WAITING,
-    
+
     /** Welt wurde von außen unterbrochen, kann aber fortgesetzt werden */
     INTERRUPTED,
-    
+
     /** Welt wurde aufgrund einer Ausnahme angehalten, kann evtl. wieder gestartet werden */
     EXCEPTION,
-    
+
     /** Welt hat den Endzustand erreicht */
     STOPPED;
-    
+
     public boolean isWaiting()
     {
       return this == THROTTLING || this == WAITING;
     }
-    
+
     public boolean isRunning()
     {
       return isWaiting() || this == WorldState.EXECUTING;
     }
-    
+
     public boolean isSuspended()
     {
       return this == INTERRUPTED || this == EXCEPTION;
     }
   }
-  
+
   protected class WorldContext<T extends World> implements Serializable
   {
     private static final long serialVersionUID = 1L;
-    
+
     @SuppressWarnings("unchecked")
     public T getWorld()
     {
       return (T) World.this;
     }
   }
-  
+
   private class DefaultExceptionHandler extends ExceptionHandler
   {
     @Override
     protected boolean handle(ExceptionEvent event)
     {
       event.getException().printStackTrace();
-      
+
       if (state == WorldState.EXECUTING)
       {
         state = WorldState.EXCEPTION;
-        
+
         publishEvent(new WorldSuspendedEvent(World.this));
       }
-      
+
       return true;
     }
   }

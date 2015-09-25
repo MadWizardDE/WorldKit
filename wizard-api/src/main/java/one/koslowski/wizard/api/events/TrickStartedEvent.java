@@ -9,12 +9,12 @@ import one.koslowski.world.api.WorldEvent;
 public class TrickStartedEvent extends WorldEvent
 {
   private static final long serialVersionUID = 1L;
-  
+
   public TrickStartedEvent(WizardTrick trick)
   {
     super(trick);
   }
-  
+
   /**
    * @return der gespielte Stich
    */
@@ -22,5 +22,5 @@ public class TrickStartedEvent extends WorldEvent
   {
     return (WizardTrick) source;
   }
-  
+
 }
