@@ -1,10 +1,17 @@
 package one.koslowski.worlds.host.link;
 
 import one.koslowski.worlds.host.Link;
+import one.koslowski.worlds.host.Message;
 
 public class TCPLink extends Link
 {
   public TCPLink()
+  {
+
+  }
+
+  @Override
+  protected void sendMessage(Message message)
   {
 
   }

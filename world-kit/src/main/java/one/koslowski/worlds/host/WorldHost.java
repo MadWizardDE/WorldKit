@@ -17,6 +17,7 @@ public class WorldHost
 {
   private WorldManager manager;
 
+  private Server  server;
   private Browser browser;
 
   private List<Link> links;
@@ -33,7 +34,13 @@ public class WorldHost
     this.manager = manager;
     this.manager.addListener(new WorldListener());
 
+    server = new Server();
     browser = new Browser();
+  }
+
+  public Server getServer()
+  {
+    return server;
   }
 
   public Browser getBrowser()
@@ -67,6 +74,8 @@ public class WorldHost
       if (!sessions.containsKey(event.getWorld()))
       {
         WorldSession session = new WorldSession(event.getWorld());
+
+        session.addHost(WorldHost.this);
 
         sessions.put(event.getWorld(), session);
       }

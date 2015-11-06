@@ -642,6 +642,13 @@ public class WorldWindow extends org.eclipse.jface.window.ApplicationWindow
     @Override
     public void run()
     {
+      WorldKit.HOST.getSession(controller.getWorld()).sync((world) ->
+      {
+        FrameDelimiter d = world.getFrameDelimiter();
+
+        d.setFPS(d.getFPS() * 2);
+      });
+
       WorldManager.sync(controller.getWorld(), () ->
       {
         FrameDelimiter d = controller.getWorld().getFrameDelimiter();

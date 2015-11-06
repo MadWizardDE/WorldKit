@@ -1,6 +1,7 @@
 package one.koslowski.worlds.host.link;
 
 import one.koslowski.worlds.host.Link;
+import one.koslowski.worlds.host.Message;
 
 public class ProxyLink extends Link
 {
@@ -14,6 +15,12 @@ public class ProxyLink extends Link
   public Link getProxy()
   {
     return proxy;
+  }
+
+  @Override
+  protected void sendMessage(Message message)
+  {
+
   }
 
   public class ProxyLinkDescriptor extends LinkDescriptor<ProxyLink>

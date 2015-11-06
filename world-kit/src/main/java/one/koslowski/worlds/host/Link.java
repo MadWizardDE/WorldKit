@@ -8,7 +8,16 @@ public abstract class Link
 {
   LinkDescriptor<Link> desc;
 
+  WorldSession session;
+
   protected Link()
+  {
+
+  }
+
+  protected abstract void sendMessage(Message message);
+
+  protected final void receiveMessage(Message message)
   {
 
   }

@@ -5,12 +5,15 @@ import java.io.Serializable;
 import java.util.List;
 
 import one.koslowski.world.api.World;
+import one.koslowski.worlds.WorldType;
+import one.koslowski.worlds.host.message.SyncMessage;
+import one.koslowski.worlds.host.message.SyncMessage.SyncChange;
 
 public class WorldSession implements Closeable
 {
   World world;
 
-  private List<Link> links;
+  private List<Host> hosts;
 
   WorldSession(World world)
   {
@@ -27,6 +30,17 @@ public class WorldSession implements Closeable
     return world;
   }
 
+  public void sync(SyncChange change)
+  {
+    postMessage(new SyncMessage(change));
+  }
+
+  public void postMessage(Message message)
+  {
+    for (Host host : hosts)
+      host.sendMessage(message);
+  }
+
   @Override
   public void close()
   {
@@ -36,5 +50,12 @@ public class WorldSession implements Closeable
   public static class SessionInfo implements Serializable
   {
     private static final long serialVersionUID = 1L;
+
+    private WorldType type;
+
+    public WorldType getType()
+    {
+      return type;
+    }
   }
 }
